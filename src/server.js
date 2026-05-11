@@ -28,11 +28,6 @@ app.get('/', (req, res) => {
   res.json({ message: 'Prisma Practice API Server' });
 });
 
-// ============================================
-// CRUD 라우트
-// ============================================
-// ⚠️ 순서 주의 — 구체 경로(`/todos/upsert`) 는 동적 경로(`/todos/:id`) 보다 위에!
-
 // READ
 app.get('/todos', getAllTodos);
 app.get('/todos/:id', getTodo);
@@ -41,12 +36,11 @@ app.get('/todos/:id', getTodo);
 app.post('/todos', createTodo);
 
 // UPDATE
-app.put('/todos/upsert', upsertTodo);
+app.put('/todos/upsert', upsertTodo);  // ⚠️ :id 보다 먼저!
 app.patch('/todos/:id', updateTodo);
 
 // DELETE
 app.delete('/todos/:id', deleteTodo);
-
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

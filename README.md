@@ -1,35 +1,31 @@
-# practice-3 — Todo CRUD
+# practice-4 — 쿼리 파라미터 처리
 
-> 📚 **교안 챕터 6** 에 해당해요. (Create / Read / Update / Delete)
+> 📚 **교안 챕터 7** 에 해당해요.
 
 ## 🎯 이번 브랜치 목표
 
-Prisma Client 의 **6개 핵심 CRUD 메서드** (`create` / `findMany` / `findUnique` / `update` / `upsert` / `delete`) 를 직접 호출해 봅니다.
+`GET /todos` 에서 **완료 여부 / 검색 / 정렬 / 페이지네이션** 을 한 번에 처리하는 종합 쿼리 컨트롤러를 만들어요.
 
-> 💡 컨트롤러 함수 6개의 골격(try/catch + 응답 구조) 은 이미 작성돼 있어요. 여러분은 **`___` 빈칸 8 군데** 만 채우면서 "어떤 Prisma 메서드를 써야 하는지" 에 집중하면 됩니다. 라우트도 `server.js` 에 미리 연결돼 있어요.
+> 💡 `getAllTodos` 의 골격(`req.query` 분해 → `where` / `orderBy` / `skip`·`take` 조립 → `Promise.all`) 은 모두 작성돼 있어요. 여러분은 **`___` 빈칸 7 군데** 만 채우면 됩니다.
 
 ---
 
 ## ✅ 이전 브랜치까지 완료된 것
 
-- ✅ 스키마: `User`, `Todo` 모델
-- ✅ 시드: 사용자 2명 + 정해진 Todo 4개 + 랜덤 30개
-- ✅ Prisma Client 싱글톤, 기본 Express 서버
+- ✅ Todo CRUD 6개 컨트롤러 + 라우트 모두 동작
+- ✅ Prisma `create / findMany / findUnique / update / upsert / delete` 익숙해진 상태
 
 ---
 
 ## ✅ TODO 체크리스트
 
-`src/controllers/todo.controller.js` 에서:
+`src/controllers/todo.controller.js` 의 `getAllTodos` 안에:
 
-- [ ] **TODO-1**: `createTodo` — `prisma.todo.___({ data })` 빈칸 1개
-- [ ] **TODO-2**: `getAllTodos` — `prisma.todo.___()` 빈칸 1개
-- [ ] **TODO-3**: `getTodo` — `prisma.todo.___({ where })` 빈칸 1개 + 없을 때 응답 상태 코드 빈칸 1개 = 총 2개
-- [ ] **TODO-4**: `updateTodo` — `prisma.todo.___({ where, data })` 빈칸 1개 + Prisma 에러 코드 빈칸 1개 = 총 2개
-- [ ] **TODO-5**: `upsertTodo` — `prisma.todo.___({ where, update, create })` 빈칸 1개
-- [ ] **TODO-6**: `deleteTodo` — `prisma.todo.___({ where })` 빈칸 1개
-
-> 💡 `server.js` 의 라우트는 이미 모두 연결돼 있어요. 컨트롤러 빈칸만 채우면 즉시 동작합니다.
+- [ ] **TODO-1**: `sort` 기본값 — 빈칸 1개
+- [ ] **TODO-2**: `where` 조립 — `isDone` 문자열 변환 + `OR` 키워드 = 빈칸 2개
+- [ ] **TODO-3**: `orderBy` 객체 매핑의 lookup 키 — 빈칸 1개
+- [ ] **TODO-4**: 페이지네이션 — `___(page)` / `___(limit)` 정수 변환 함수 (같은 답 두 번) = 빈칸 2개
+- [ ] **TODO-5**: `Promise.all` 안의 Prisma 메서드 — `findMany` + `count` = 빈칸 2개
 
 ---
 
@@ -41,53 +37,54 @@ npm run dev
 
 ---
 
-## 🧪 동작 확인 (cURL 예시)
+## 🧪 동작 확인 (cURL)
 
 ```bash
-# 헬스 체크
-curl http://localhost:3000/health
+# 모든 Todo (기본: 최신순, 10개)
+curl "http://localhost:3000/todos"
 
-# 전체 조회
-curl http://localhost:3000/todos
+# 미완료 Todo 만
+curl "http://localhost:3000/todos?isDone=false"
 
-# 단일 조회
-curl http://localhost:3000/todos/1
+# '공부' 검색 (title + content 양쪽)
+curl "http://localhost:3000/todos?search=공부"
 
-# 생성
-curl -X POST http://localhost:3000/todos \
-  -H "Content-Type: application/json" \
-  -d '{"title":"테스트 할 일","content":"내가 만든 첫 Todo","isDone":false}'
+# 제목 오름차순 정렬
+curl "http://localhost:3000/todos?sort=title"
 
-# 수정 — 완료 처리
-curl -X PATCH http://localhost:3000/todos/1 \
-  -H "Content-Type: application/json" \
-  -d '{"isDone":true}'
+# 페이지네이션 (2페이지, 페이지당 5개)
+curl "http://localhost:3000/todos?page=2&limit=5"
 
-# Upsert — id 가 있으면 수정, 없으면 생성
-curl -X PUT http://localhost:3000/todos/upsert \
-  -H "Content-Type: application/json" \
-  -d '{"id":999,"title":"새 할 일","content":"upsert 테스트","isDone":false}'
+# 조합 — 미완료 + '운동' 검색
+curl "http://localhost:3000/todos?isDone=false&search=운동"
+```
 
-# 단일 삭제
-curl -X DELETE http://localhost:3000/todos/1
-
-# 존재하지 않는 ID — 404 확인
-curl http://localhost:3000/todos/99999
+**예상 응답 형태:**
+```json
+{
+  "success": true,
+  "page": 1,
+  "limit": 10,
+  "total": 34,
+  "totalPages": 4,
+  "filters": { "isDone": "false", "search": "공부", "sort": "latest" },
+  "data": [ ... ]
+}
 ```
 
 ---
 
-## ⚠️ 자주 하는 실수 / 알아두면 좋은 것
+## ⚠️ 알아두면 좋은 것
 
-- **라우트 순서**: `/todos/upsert` 가 `/todos/:id` 보다 먼저 등록돼야 합니다. 안 그러면 Express 가 `'upsert'` 를 id 로 인식해서 의도와 다른 동작을 합니다. (이번 브랜치 `server.js` 에 이미 순서대로 작성돼 있어요. 다른 프로젝트에서도 같은 패턴!)
-- **`parseInt` 빠뜨림**: `req.params.id` 는 항상 문자열. Prisma 는 `where: { id: 1 }` 처럼 숫자를 기대합니다. (이미 `parseInt` 로 변환돼 있어요.)
-- **P2025**: 없는 행을 update/delete 하면 Prisma 가 던지는 에러 코드. catch 에서 분기해 404 로 응답해야 합니다. (TODO-4 의 두 번째 빈칸이 바로 이것!)
+- **`req.query` 값은 항상 문자열**: 그래서 `isDone === 'true'` 같은 문자열 비교 + `parseInt(page)` 같은 변환이 필요해요. (TODO-2 ①, TODO-4 가 바로 이 포인트!)
+- **`Promise.all` 의 이점**: `findMany` 와 `count` 가 병렬 실행돼서 응답 속도가 거의 절반.
+- **빈 `where`**: 아무 필터도 안 들어왔을 때 `where: {}` 라도 통과해야 함 → 빈 객체로 시작해서 조건부로 키 추가하는 방식 권장. (이미 그렇게 작성돼 있어요!)
 
 ---
 
 ## 💡 막히면?
 
 ```bash
-git checkout practice-4   # 정답 확인
-git checkout practice-3   # 다시 돌아오기
+git checkout practice-5   # 정답 확인
+git checkout practice-4   # 다시 돌아오기
 ```

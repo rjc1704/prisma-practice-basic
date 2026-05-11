@@ -1,23 +1,17 @@
 // ============================================
 // Todo 컨트롤러
 // ============================================
-//
-// 6개의 CRUD 함수 골격은 이미 작성돼 있어요.
-// 여러분은 각 함수의 `___` 빈칸을 채우면서 Prisma 의 핵심 메서드 이름을 익혀 보세요.
 
 import prisma from '../lib/prisma.js';
 
 // ---------------- Create ----------------
 
-// ✏️ TODO-1: 새 행을 만드는 Prisma 메서드 이름은? (create / createMany / make 중)
 export const createTodo = async (req, res) => {
   try {
     const { title, content, isDone } = req.body;
-
-    const todo = await prisma.todo.___({                       // ← TODO-1
+    const todo = await prisma.todo.create({
       data: { title, content, isDone }
     });
-
     res.status(201).json({ success: true, data: todo });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -26,34 +20,82 @@ export const createTodo = async (req, res) => {
 
 // ---------------- Read ----------------
 
-// ✏️ TODO-2: 모든 행을 배열로 가져오는 Prisma 메서드 이름은? (findMany / findAll / getAll 중)
 export const getAllTodos = async (req, res) => {
   try {
-    const todos = await prisma.todo.___();                     // ← TODO-2
-    res.json({ success: true, count: todos.length, data: todos });
+    // ✏️ TODO-1: 아래 ___ 를 채우세요.
+    //   sort 의 기본값은? (latest / oldest / title 중 — "최신순" 을 의미하는 키)
+    const {
+      isDone,
+      search,
+      sort  = '___',                                       // ← TODO-1
+      page  = '1',
+      limit = '10'
+    } = req.query;
+
+
+    // ✏️ TODO-2: where 조건 동적 조립 — 아래 ___ 두 군데를 채우세요.
+    //   ① req.query 값은 항상 문자열. 'true' 문자열과 비교해서 boolean 으로 변환.
+    //   ② title 과 content 양쪽을 모두 검색하려면 Prisma 의 어떤 키를 쓸까요? (AND / OR / NOT 중)
+    const where = {};
+    if (isDone !== undefined) {
+      where.isDone = (isDone === '___');                   // ← ①
+    }
+    if (search) {
+      where.___ = [                                        // ← ②
+        { title:   { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+
+    // ✏️ TODO-3: orderBy 동적 조립 — 아래 ___ 를 채우세요.
+    //   객체 매핑: { latest: ..., oldest: ..., title: ... }[??] 로 sort 값에 해당하는 orderBy 객체를 꺼냅니다.
+    //   괄호 안에 들어갈 변수 이름은 무엇일까요?
+    const orderBy = {
+      latest: { createdAt: 'desc' },
+      oldest: { createdAt: 'asc'  },
+      title:  { title:     'asc'  }
+    }[___] || { createdAt: 'desc' };                       // ← TODO-3
+
+
+    // ✏️ TODO-4: 페이지네이션 — 아래 ___ 를 채우세요. (같은 함수 이름을 두 번 씁니다)
+    //   문자열을 정수로 변환하는 JavaScript 내장 함수 이름은?
+    const pageNum = ___(page)  || 1;                       // ← TODO-4
+    const take    = ___(limit) || 10;                      // ← TODO-4 (같은 답)
+    const skip    = (pageNum - 1) * take;
+
+
+    // ✏️ TODO-5: Promise.all 로 목록 + 전체 개수를 병렬 조회 — ___ 두 군데를 채우세요.
+    //   ① 조건에 맞는 모든 행을 배열로 가져오는 Prisma 메서드는? (practice-3 에서도 만났죠!)
+    //   ② 조건에 맞는 행의 "개수" 를 세는 Prisma 메서드는?
+    const [todos, total] = await Promise.all([
+      prisma.todo.___({ where, orderBy, skip, take }),     // ← ①
+      prisma.todo.___({ where })                            // ← ②
+    ]);
+
+    res.json({
+      success: true,
+      page: pageNum,
+      limit: take,
+      total,
+      totalPages: Math.ceil(total / take),
+      filters: { isDone, search, sort },
+      data: todos
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ✏️ TODO-3: 아래 ___ 두 군데를 채우세요.
-//   ① unique 필드(id)로 단 1개를 찾는 Prisma 메서드 이름은? (findUnique / findOne / findById 중)
-//   ② Todo 가 없을 때 응답할 HTTP 상태 코드는? ("리소스 없음" 을 의미)
 export const getTodo = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const todo = await prisma.todo.___({                       // ← ①
+    const todo = await prisma.todo.findUnique({
       where: { id: parseInt(id) }
     });
-
     if (!todo) {
-      return res.status(___).json({                            // ← ②
-        success: false,
-        message: 'Todo를 찾을 수 없습니다'
-      });
+      return res.status(404).json({ success: false, message: 'Todo를 찾을 수 없습니다' });
     }
-
     res.json({ success: true, data: todo });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -62,40 +104,30 @@ export const getTodo = async (req, res) => {
 
 // ---------------- Update ----------------
 
-// ✏️ TODO-4: 아래 ___ 두 군데를 채우세요.
-//   ① 특정 행을 수정하는 Prisma 메서드 이름은? (update / patch / modify 중)
-//   ② "없는 행을 수정/삭제하려 할 때" Prisma 가 던지는 에러 코드는?
-//      (힌트: P 로 시작하는 4글자 코드 — 교안 6챕터 § 3. Update — (2) 실습 참고)
 export const updateTodo = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const todo = await prisma.todo.___({                       // ← ①
+    const todo = await prisma.todo.update({
       where: { id: parseInt(id) },
       data: req.body
     });
-
     res.json({ success: true, data: todo });
   } catch (error) {
-    if (error.code === '___') {                                // ← ②
+    if (error.code === 'P2025') {
       return res.status(404).json({ success: false, message: 'Todo를 찾을 수 없습니다' });
     }
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// ✏️ TODO-5: "있으면 수정, 없으면 새로 생성" 하는 Prisma 메서드 이름은?
-//   (update + insert 의 합성어, 영어 단어로 6글자)
 export const upsertTodo = async (req, res) => {
   try {
     const { id, title, content, isDone } = req.body;
-
-    const todo = await prisma.todo.___({                       // ← TODO-5
+    const todo = await prisma.todo.upsert({
       where:  { id },
       update: { title, content, isDone },
       create: { title, content, isDone: isDone ?? false }
     });
-
     res.json({ success: true, data: todo });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -104,15 +136,12 @@ export const upsertTodo = async (req, res) => {
 
 // ---------------- Delete ----------------
 
-// ✏️ TODO-6: 특정 행을 삭제하는 Prisma 메서드 이름은? (delete / remove / drop 중)
 export const deleteTodo = async (req, res) => {
   try {
     const { id } = req.params;
-
-    await prisma.todo.___({                                    // ← TODO-6
+    await prisma.todo.delete({
       where: { id: parseInt(id) }
     });
-
     res.json({ success: true, message: 'Todo가 삭제되었습니다' });
   } catch (error) {
     if (error.code === 'P2025') {
