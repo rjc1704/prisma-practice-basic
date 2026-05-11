@@ -1,6 +1,6 @@
 # reference — 전체 정답 (완성본)
 
-> 🎓 **챕터 1~10 + [3] 관계 챕터 1~8 (관계 정의 + 조회 + connectOrCreate)** 까지의 정답.
+> 🎓 **챕터 1~10 + [3] 관계 챕터 1~9 (정의 / 조회 / 추가 / 해제)** 까지의 정답.
 
 ## 🎯 이 브랜치가 다루는 것
 
@@ -74,12 +74,14 @@ prisma-practice/
 | GET    | `/tags/:name/todos`  | 해당 태그가 붙은 Todo 들 (some) |
 | POST   | `/todos/:todoId/tags`      | Todo 에 태그 1개 추가 (connectOrCreate) |
 | POST   | `/todos/:todoId/tags/bulk` | 여러 태그를 한 번에 추가 (connectOrCreate 배열) |
+| DELETE | `/todos/:todoId/tags/:tagId` | Todo 에서 태그 1개 떼기 (disconnect) |
+| PUT    | `/todos/:todoId/tags`        | Todo 태그 통째 교체 (set) |
 
 ---
 
 ## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-git checkout practice-12  # 마지막 실습 브랜치 (connectOrCreate)
+git checkout practice-13  # 마지막 실습 브랜치 (disconnect / set)
 git checkout practice-1   # 처음부터
 ```

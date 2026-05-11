@@ -17,6 +17,8 @@ import {
   getTodosLite,
   addTagToTodo,
   addTagsBulk,
+  removeTagFromTodo,
+  replaceTodoTags,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -71,6 +73,10 @@ app.get('/tags/:name/todos', getTodosByTag);
 // ---------------- Todo 에 Tag 추가 (connectOrCreate) ----------------
 app.post('/todos/:todoId/tags', addTagToTodo);
 app.post('/todos/:todoId/tags/bulk', addTagsBulk);
+
+// ---------------- Tag 해제 (disconnect / set) ----------------
+app.delete('/todos/:todoId/tags/:tagId', removeTagFromTodo);
+app.put('/todos/:todoId/tags', replaceTodoTags);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

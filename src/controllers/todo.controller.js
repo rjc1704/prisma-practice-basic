@@ -217,3 +217,38 @@ export const addTagsBulk = asyncHandler(async (req, res) => {
 
   res.status(201).json({ success: true, data: todo });
 });
+
+// ---------------- Tag 해제 (disconnect / set) ----------------
+
+export const removeTagFromTodo = asyncHandler(async (req, res) => {
+  const { todoId, tagId } = req.params;
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        disconnect: { id: parseInt(tagId) }
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.json({ success: true, data: todo });
+});
+
+export const replaceTodoTags = asyncHandler(async (req, res) => {
+  const { todoId } = req.params;
+  const { tagIds } = req.body;
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        set: tagIds.map(id => ({ id: parseInt(id) }))
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.json({ success: true, data: todo });
+});
