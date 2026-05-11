@@ -22,16 +22,13 @@ model User {
   @@map("users")
 }
 
-// ✏️ TODO-1: User 가 삭제되면 그 User 의 Todo 도 같이 삭제되어야 자연스럽죠.
-//   아래 @relation(...) 안에 어떤 옵션을 추가해야 "부모 삭제 시 자식도 자동 삭제" 가 될까요?
-//   힌트: "Restrict / Cascade / SetNull / NoAction" 중 — "물줄기처럼 전파" 라는 영어 단어.
 model Todo {
   id        Int      @id @default(autoincrement())
   title     String
   content   String?
   isDone    Boolean  @default(false)
   userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: ___)   // ← TODO-1
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags      Tag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -47,14 +44,12 @@ model Tag {
   @@map("tags")
 }
 
-// ✏️ TODO-2: User 가 삭제되면 그 User 의 Profile 도 자동 삭제되어야 합니다.
-//   Todo 와 똑같은 옵션을 Profile 에도 추가하세요.
 model Profile {
   id        Int     @id @default(autoincrement())
   bio       String?
   avatarUrl String?
   userId    Int     @unique
-  user      User    @relation(fields: [userId], references: [id], onDelete: ___)    // ← TODO-2
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }

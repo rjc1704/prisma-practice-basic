@@ -1,103 +1,115 @@
-# practice-10 — Relation onDelete (Cascade)
+# practice-11 — 관계 조회 (include / select / some)
 
-> 📚 **[3] 관계 챕터 4 (실습#10)** 에 해당해요.
+> 📚 **[3] 관계 챕터 5 (실습#11)** 에 해당해요.
 
 ## 🎯 이번 브랜치 목표
 
-"**부모가 삭제되면 자식은 어떻게 되나?**" 를 명시적으로 정합니다. 우리 도메인에서는 **사용자 탈퇴 = 그 사용자의 Todo / Profile 도 함께 삭제** 가 자연스러우니 `Cascade` 를 적용합니다.
+지금까지 `prisma.todo.findMany()` 만 했죠. 이번엔 **관계까지 함께 가져오기 / 원하는 필드만 가져오기 / 관계 조건으로 필터링** 세 가지를 익힙니다.
 
 ```
-User 삭제
-  ↓ (Cascade)
-  ├─ 그 User 의 Todo 들 자동 삭제
-  └─ 그 User 의 Profile 자동 삭제
+include : 관계 통째로 (SQL JOIN 처럼)
+select  : 지정한 필드만 (SQL SELECT col1, col2)
+where + some/every/none : 관계 안에서 조건 걸기
 ```
 
-> 💡 onDelete 4가지 옵션 — `Restrict`(기본, 자식 있으면 부모 못 지움) / `Cascade`(같이 삭제) / `SetNull`(자식의 외래 키를 NULL) / `NoAction`(DB 위임). 도메인에 따라 의도적으로 선택.
+> 💡 `include` 와 `select` 는 **같이 못 써요** — 둘은 사상이 달라서 (전체+추가 vs 필요한 것만). 한 쿼리에 하나만!
 
 ---
 
 ## ✅ 이전 브랜치까지 완료된 것
 
-- ✅ User + Todo + Tag + Profile 모델
-- ✅ 1:N / N:M / 1:1 세 가지 관계 모두 정의
-- ✅ 라우트: Todo CRUD, `GET /users/:userId/todos`, `GET /tags`, `GET /users/:id`
+- ✅ User / Todo / Tag / Profile + 1:N / N:M / 1:1 + onDelete: Cascade
+- ✅ Todo CRUD 6, `GET /users/:userId/todos`, `GET /tags`, `GET /users/:id`, `DELETE /users/:id`
 
 ---
 
 ## ✅ TODO 체크리스트
 
-> 🗂 **총 2 곳** — 핵심 키워드 한 단어를 두 번.
+> 🗂 **총 3 곳**. 모두 `src/controllers/todo.controller.js`.
 
-- [ ] **TODO-1**: `prisma/schema.prisma` — `Todo.user @relation(..., onDelete: ___)` 빈칸 1
-- [ ] **TODO-2**: `prisma/schema.prisma` — `Profile.user @relation(..., onDelete: ___)` 빈칸 1 (같은 답)
+- [ ] **TODO-1**: `getTodoWithRelations` — `___: { user: true, tags: true }` 빈칸 1 (관계 함께 가져오기 키워드)
+- [ ] **TODO-2**: `getTodosByTag` — `tags: { ___: { name } }` 빈칸 1 (관계 안 "하나라도 일치")
+- [ ] **TODO-3**: `getTodosLite` — `___: { id: true, title: true, isDone: true }` 빈칸 1 (지정한 필드만 가져오기)
 
 ---
 
 ## 🛠 실행 방법
 
 ```bash
-# 1. (TODO-1, 2 채운 뒤) 마이그레이션
-npx prisma migrate dev --name add_on_delete_cascade
-
-# 2. 서버 실행
 npm run dev
 ```
 
-> ⚠️ 시드 재실행은 굳이 필요 없어요. 이번 챕터는 스키마 메타데이터(FK 제약)만 변경.
+> ⚠️ 마이그레이션 / 시드 재실행 불필요. 이번 챕터는 컨트롤러 / 라우트만 추가.
 
 ---
 
-## 🧪 동작 확인
+## 🧪 동작 확인 (cURL)
 
 ```bash
-# 1. Alice 삭제 전 — Todo 개수 확인
-curl http://localhost:3000/users/1/todos | head -50
-#   → Alice 의 Todo 가 여러 개 보임
+# 1. Todo 하나 + 작성자 + 태그 모두 (include)
+curl http://localhost:3000/todos/1/full
+# → { ..., user: { id: 1, name: 'Alice', ... }, tags: [ { name: '집안일' } ] }
 
-# 2. Alice 삭제 — Cascade 작동!
-curl -X DELETE http://localhost:3000/users/1
-#   → { success: true, message: 'User가 삭제되었습니다 ...' }
+# 2. '공부' 태그가 붙은 Todo 만 (some)
+curl http://localhost:3000/tags/%EA%B3%B5%EB%B6%80/todos    # URL 인코딩된 '공부'
+# 또는 그냥:
+curl "http://localhost:3000/tags/공부/todos"
+# → { count: 1, data: [{ title: 'Prisma 공부하기', tags: [{ name: '공부' }] }] }
 
-# 3. Alice 의 Todo 가 모두 사라졌는지 확인
-curl http://localhost:3000/users/1/todos
-#   → { success: true, count: 0, data: [] }
-
-# 4. Alice 의 Profile 도 사라졌는지 확인 — 404 (Alice 자체가 없음)
-curl http://localhost:3000/users/1
-#   → { success: false, message: 'User를 찾을 수 없습니다' }
+# 3. id / title / isDone 만 (select) — content / userId / createdAt 등 빠짐
+curl http://localhost:3000/todos-lite
+# → [ { id: 1, title: '우유 사오기', isDone: false }, ... ]
 ```
-
-만약 onDelete 가 `Restrict` (기본값) 라면 2번에서 **에러**가 떨어집니다:
-```json
-{ "success": false, "message": "데이터를 찾을 수 없습니다" }
-```
-혹은 더 정확한 메시지로 "Foreign key constraint violated" — 자식이 있어서 부모 삭제 거부.
 
 ---
 
-## 💡 Cascade 가 항상 정답은 아니에요
+## 💡 include vs select 비교표
 
-도메인에 따라 **`Restrict` 가 더 안전한 경우**도 많습니다. 예:
-- 결제 정보처럼 함부로 지우면 안 되는 도메인 → `Restrict`
-- 게시글이 사라지면 댓글도 같이 사라져야 자연스러움 → `Cascade`
-- 회원 탈퇴 후에도 작성 글은 익명으로 남기고 싶음 → `SetNull` (외래 키가 nullable 여야 함)
+| 키워드 | 의미 | 예시 응답 차이 |
+|---|---|---|
+| `include` | 모든 기본 필드 + **관계 추가** | `{ id, title, content, ..., user: {...}, tags: [...] }` |
+| `select`  | **지정한 것만** | `{ id, title, isDone }` (지정 안 한 건 아예 없음) |
+| (둘 다 없음) | 모든 기본 필드만 | `{ id, title, content, ..., createdAt, updatedAt }` |
 
-**N:M 의 중간 테이블** (`_TodoToTag`) 은 Prisma 가 알아서 정리합니다. Todo 삭제 → `_TodoToTag` 의 해당 행만 자동 삭제. Tag 자체는 그대로 (다른 Todo 가 쓸 수 있으니까).
+**언제 어떤 걸 쓰나?**
+- 관리자 페이지처럼 다 보여줘야 → `include`
+- 모바일/API 효율 (전송 데이터 최소화) → `select`
+- 실무에서는 `select` 가 더 자주 권장됩니다.
+
+---
+
+## 💡 `some` / `every` / `none` 빠른 사전
+
+| 키워드 | 의미 |
+|---|---|
+| `some`  | 관계 중 **하나라도** 조건 일치 |
+| `every` | **모두** 조건 일치 |
+| `none`  | **하나도** 일치 없음 |
+
+```js
+// "공부 태그가 붙은 Todo" — some
+where: { tags: { some: { name: '공부' } } }
+
+// "태그가 하나도 없는 Todo"
+where: { tags: { none: {} } }
+
+// "모든 태그가 'X' 인 Todo" (거의 안 씀)
+where: { tags: { every: { name: 'X' } } }
+```
 
 ---
 
 ## 🧠 막히면?
 
 ```bash
-git checkout practice-11   # 다음 (include / select / 관계 필터링)
+git checkout practice-12   # 다음 (connectOrCreate, 태그 추가 라우터)
 git checkout reference     # 전체 정답
-git checkout practice-10   # 복귀
+git checkout practice-11   # 복귀
 ```
 
 ---
 
 ## 📚 교안 참고 포인트
 
-- **4. Relation 의 onDelete 설정** — 4 옵션 중 Cascade / Restrict 가 90% 차지.
-- **Prisma SQL 출력 확인** — `prisma migrate dev` 로 생성된 `migration.sql` 안 `ON DELETE CASCADE` 구문이 들어 있는지 보면 학습에 도움이 돼요.
+- **5. 관련된 객체 조회하기** — `include` / `select` / 관계 안 `where` 의 차이.
+- **`some` / `every` / `none`** — N:M 필터링의 핵심 3 키워드.

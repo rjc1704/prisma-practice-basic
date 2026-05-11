@@ -12,6 +12,9 @@ import {
   getAllTags,
   getUserWithProfile,
   deleteUser,
+  getTodoWithRelations,
+  getTodosByTag,
+  getTodosLite,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -57,6 +60,11 @@ app.get('/tags', getAllTags);
 // ---------------- User + Profile (1:1) ----------------
 app.get('/users/:id', getUserWithProfile);
 app.delete('/users/:id', deleteUser);
+
+// ---------------- 관계 조회 (Ch5) ----------------
+app.get('/todos/:id/full', getTodoWithRelations);
+app.get('/todos-lite', getTodosLite);
+app.get('/tags/:name/todos', getTodosByTag);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
