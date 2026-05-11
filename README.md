@@ -1,59 +1,71 @@
-# Prisma 실습 (Prisma + Express CRUD)
+# practice-1 — 프로젝트 셋업 + User 모델 + 첫 마이그레이션
 
-관계형 데이터베이스를 처음 배운 학생들을 위한 **단계별 Prisma 실습 저장소**입니다. 교안의 흐름을 그대로 따라가며 한 챕터씩 직접 손으로 만들어 봅니다.
+> 📚 **교안 챕터 1, 2, 3** 에 해당해요.
 
----
+## 🎯 이번 브랜치 목표
 
-## 🌳 브랜치 구성
-
-각 브랜치는 **이전 브랜치의 정답을 모두 포함**하고, **그 챕터에 해당하는 새로운 TODO만 비어 있는 상태**예요.
-
-| 브랜치 | 챕터 | 무엇을 배우나요? |
-|---|---|---|
-| `practice-1` | 1, 2, 3 | 프로젝트 셋업 + Prisma 초기화 + User 모델 + 첫 마이그레이션 |
-| `practice-2` | 4, 5 | Product 모델 추가 + 시딩 (faker) |
-| `practice-3` | 6 | Product CRUD (Create / Read / Update / Delete / Count) |
-| `practice-4` | 7 | 쿼리 파라미터 (필터 / 검색 / 정렬 / 페이지네이션) |
-| `practice-5` | 9 | Zod 유효성 검사 + 미들웨어 |
-| `practice-6` | 10 | 오류 처리 (asyncHandler + 커스텀 에러 + 글로벌 핸들러) |
-| `practice-7` | 8 | 심화 — distinct / aggregate / groupBy |
-| `reference` | 전체 정답 | 완성본. 막힐 때 비교용으로 참고 |
+Prisma 프로젝트를 처음부터 셋업하고, **User 모델**을 정의해서 PostgreSQL DB에 첫 마이그레이션을 적용해 봅니다.
 
 ---
 
-## 🚀 실습 시작하기
+## ✅ TODO 체크리스트
+
+> 🗂 각 TODO는 코드 안에 `// TODO-N: ...` 주석으로 표시돼 있어요. 순서대로 따라가면 돼요.
+
+- [ ] **TODO-1**: `prisma/schema.prisma` — `User` 모델 작성 (`@@map("users")` 포함)
+- [ ] **TODO-2**: `src/lib/prisma.js` — PrismaClient 인스턴스 생성 후 export
+- [ ] **TODO-3**: `src/server.js` — `express.json()` 미들웨어 등록
+- [ ] **그리고**: `.env.example` 을 복사해서 `.env` 만들고 본인 `DATABASE_URL` 입력
+- [ ] **그리고**: 터미널에서 첫 마이그레이션 실행 → `npx prisma migrate dev --name init`
+- [ ] **그리고**: `npx prisma studio` 또는 DBeaver 로 `users` 테이블 생성 확인
+
+---
+
+## 🛠 실행 방법
 
 ```bash
-# 1. 저장소 클론 (또는 본인 환경에서 git remote add)
-git clone <repo-url>
-cd prisma-practice
+# 1. 의존성 설치
+npm install
 
-# 2. 첫 번째 실습 브랜치로 이동
-git checkout practice-1
+# 2. .env 파일 만들기
+cp .env.example .env
+# → .env 를 열어서 DATABASE_URL을 본인 환경에 맞게 수정
 
-# 3. 브랜치마다 들어 있는 README.md를 보고 TODO를 채워나가세요!
+# 3. (TODO-1, 2, 3 채운 뒤) 첫 마이그레이션
+npx prisma migrate dev --name init
+
+# 4. 서버 실행
+npm run dev
 ```
 
 ---
 
-## 💡 막힐 때
+## 🧪 동작 확인
 
 ```bash
-# 다음 브랜치로 잠깐 넘어가서 정답 보기
+# 헬스 체크
+curl http://localhost:3000/health
+# → {"status":"OK"}
+
+# DB에 테이블 생겼는지 확인
+npx prisma studio
+# → http://localhost:5555 에서 users 테이블 확인
+```
+
+---
+
+## 💡 막히면?
+
+```bash
+# 다음 브랜치(practice-2)에 정답이 있어요.
 git checkout practice-2
-
-# 다시 내 실습 브랜치로 돌아오기
+# 다시 돌아오기
 git checkout practice-1
 ```
 
-학생이 작성한 답은 **굳이 커밋하지 않아도 괜찮아요.** 브랜치 사이를 자유롭게 오가면서 비교하세요. (커밋하고 싶다면 본인 fork에서 자유롭게!)
-
 ---
 
-## ⚙️ 환경 준비물
+## 📚 참고
 
-- **Node.js** 20 이상
-- **PostgreSQL** (로컬 설치 또는 [Render.com 무료 DB](https://render.com))
-- **DBeaver** (선택 — DB 시각화)
-
-> 💡 PostgreSQL 외부 DB URL이 필요해요. `.env.example` 파일을 복사해서 `.env`로 만들고 본인 URL을 넣어주세요.
+- Prisma 공식 문서: https://www.prisma.io/docs
+- 교안의 **1챕터(프로젝트 셋업), 2챕터(User 모델), 3챕터(마이그레이션)** 부분을 다시 읽어보면 도움이 돼요.
