@@ -21,19 +21,13 @@ model User {
 }
 
 
-// TODO-1: Todo 모델을 작성하세요.
-//   필드:
-//     - id        Int      자동 증가 PK            (@id @default(autoincrement()))
-//     - title     String   제목 (필수)
-//     - content   String?  내용 (선택 — NULL 허용)
-//     - isDone    Boolean  완료 여부 (기본값 false) (@default(false))
-//     - createdAt DateTime 기본값: 현재 시간        (@default(now()))
-//     - updatedAt DateTime 자동 업데이트            (@updatedAt)
-//   테이블 매핑: @@map("todos")
-//
-//   힌트: 교안 4챕터의 (1) prisma/schema.prisma 작성 참고
-//
-// model Todo {
-//   ???
-//   @@map("todos")
-// }
+model Todo {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  isDone    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("todos")
+}
