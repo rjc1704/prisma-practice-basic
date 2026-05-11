@@ -127,3 +127,15 @@ export const getAllTags = asyncHandler(async (req, res) => {
   });
   res.json({ success: true, count: tags.length, data: tags });
 });
+
+// ---------------- User + Profile (1:1 검증용) ----------------
+
+export const getUserWithProfile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+    include: { profile: true }
+  });
+  if (!user) throw new NotFoundError('User를 찾을 수 없습니다');
+  res.json({ success: true, data: user });
+});

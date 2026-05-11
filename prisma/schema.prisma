@@ -15,6 +15,12 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String
   todos     Todo[]
+
+  // ✏️ TODO-1: User 와 Profile 의 1:1 관계 — 사용자는 프로필을 가질 수도 / 안 가질 수도.
+  //   힌트: 1:N 의 1쪽이 `Profile[]` 이었다면, 1:1 의 1쪽은 단수 + "선택적" 표시가 붙어요.
+  //         (단수형 + 물음표(?))
+  profile   ___                                              // ← TODO-1
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -28,25 +34,30 @@ model Todo {
   isDone    Boolean  @default(false)
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
-
-  // ✏️ TODO-3: Todo 쪽에서도 Tag 들을 가리키는 가상 필드를 추가해야 N:M 이 성립해요.
-  //   힌트: 양쪽 모두 배열 필드 — Tag[] 형태. 외래 키는 안 만들어도 돼요(중간 테이블은 Prisma 가 자동 생성).
-  tags      ___[]                                            // ← TODO-3
-
+  tags      Tag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("todos")
 }
 
-// ✏️ TODO-1: Tag 모델의 name 은 중복되면 안 돼요. (같은 이름의 태그가 두 개 있으면 헷갈리겠죠?)
-//   "이 컬럼은 unique 다" 를 표시하는 Prisma 속성은? (@id / @unique / @default 중)
-// ✏️ TODO-2: Tag 쪽에서도 이 Tag 가 붙어 있는 Todo 들을 가리키는 가상 필드가 필요해요.
-//   힌트: 1:N 의 1쪽 면과 똑같이 ___[] 형태.
 model Tag {
   id    Int    @id @default(autoincrement())
-  name  String ___                                           // ← TODO-1
-  todos ___[]                                                // ← TODO-2
+  name  String @unique
+  todos Todo[]
 
   @@map("tags")
+}
+
+// ✏️ TODO-2: Profile 의 외래 키(userId) 에 "이게 1:1 이다" 를 표시하는 속성은?
+//   힌트: 한 사용자는 프로필 하나만! → 같은 userId 가 두 행에 있을 수 없음.
+//          1:N 의 N쪽과 비교했을 때 딱 한 단어가 추가됩니다.
+model Profile {
+  id        Int     @id @default(autoincrement())
+  bio       String?
+  avatarUrl String?
+  userId    Int     ___                                      // ← TODO-2
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("profiles")
 }
