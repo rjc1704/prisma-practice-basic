@@ -1,99 +1,79 @@
-# practice-6 — 오류 처리 (asyncHandler + 커스텀 에러)
+# reference — 전체 정답 (완성본)
 
-> 📚 **교안 챕터 10** 에 해당해요.
+> 🎓 **모든 챕터 (1~10) 의 정답** 이 들어 있어요. 막힐 때 비교용으로 참고하세요.
 
-## 🎯 이번 브랜치 목표
+## 🎯 이 브랜치가 다루는 것
 
-**모든 컨트롤러의 `try/catch` 를 `asyncHandler` 한 곳으로 모읍니다.** 핵심 도구 2개:
-
-1. `asyncHandler` — async 함수를 감싸 내부에서 throw 된 에러를 종류별로 처리
-2. 커스텀 에러 클래스 — `throw new NotFoundError('...')` 처럼 의도 분명한 에러 던지기
-
-> 💡 `asyncHandler` 안에 모든 에러 분기(Zod / Prisma "행 없음" / AppError / 그 외) 가 모여 있어요. 컨트롤러 6개는 이미 `asyncHandler` 로 감싸졌고 `try/catch` 가 사라진 상태입니다. 여러분은 **`___` 빈칸 4 군데** 만 채우면 됩니다.
-
----
-
-## ✅ 이전 브랜치까지 완료된 것
-
-- ✅ Zod 검증 + validate 미들웨어
-- ✅ `POST /todos`, `PATCH /todos/:id` 에서 검증 동작
-- ✅ 컨트롤러에서 `req.validatedData` 사용
-
----
-
-## ✅ TODO 체크리스트
-
-- [ ] **TODO-1**: `src/utils/asyncHandler.js` — Prisma 에러 코드 (`P????`) + HTTP 상태 코드 = 빈칸 2개
-- [ ] **TODO-2**: `src/utils/errors.js` — `NotFoundError` 의 HTTP 상태 코드 = 빈칸 1개
-- [ ] **TODO-3**: `src/controllers/todo.controller.js` — `getTodo` 의 `throw new ___(...)` 커스텀 에러 클래스 이름 = 빈칸 1개
+- ✅ User + Todo 모델
+- ✅ 시드 (사용자 2명 + 정해진 Todo 4개 + faker 30개)
+- ✅ Todo CRUD 6개 (create / getAll / getOne / update / upsert / delete)
+- ✅ 쿼리 파라미터 — `isDone` / `search` / `sort` / `page` / `limit`
+- ✅ Zod 스키마 + `validate` 미들웨어
+- ✅ `asyncHandler` 안에서 모든 에러 종류별 처리 (Zod / Prisma / AppError / 그 외)
 
 ---
 
 ## 🛠 실행 방법
 
 ```bash
+# 1. 의존성 설치
+npm install
+
+# 2. .env 만들기
+cp .env.example .env
+# → DATABASE_URL 본인 환경에 맞게 수정
+
+# 3. 마이그레이션 + 시드
+npx prisma migrate dev
+npm run seed
+
+# 4. 서버 실행
 npm run dev
 ```
 
 ---
 
-## 🧪 동작 확인 (cURL)
+## 📂 디렉터리 구조
+
+```
+prisma-practice/
+├── prisma/
+│   ├── schema.prisma         User + Todo 모델
+│   ├── seed.js               사용자 2명 + 정해진 Todo 4개 + faker 30개
+│   └── migrations/           Prisma 자동 생성
+└── src/
+    ├── controllers/
+    │   └── todo.controller.js   6개 CRUD (asyncHandler 적용)
+    ├── schemas/
+    │   └── todo.schema.js       Zod create/update 스키마
+    ├── middlewares/
+    │   └── validate.js          Zod 검증 미들웨어
+    ├── utils/
+    │   ├── asyncHandler.js      모든 에러 분기 처리
+    │   └── errors.js            AppError / NotFoundError 등
+    ├── lib/
+    │   └── prisma.js            PrismaClient 싱글톤
+    └── server.js                라우트 등록
+```
+
+---
+
+## 🧪 API 한눈에 보기
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET    | `/todos`             | 전체 목록 (`isDone`, `search`, `sort`, `page`, `limit`) |
+| GET    | `/todos/:id`         | 단일 조회 (없으면 404) |
+| POST   | `/todos`             | 생성 (Zod 검증) |
+| PUT    | `/todos/upsert`      | 있으면 수정, 없으면 생성 |
+| PATCH  | `/todos/:id`         | 수정 (Zod 검증, 없으면 404) |
+| DELETE | `/todos/:id`         | 삭제 (없으면 404) |
+
+---
+
+## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-# ✅ 존재하지 않는 ID — Prisma P2025 분기가 처리
-curl -X PATCH http://localhost:3000/todos/99999 \
-  -H "Content-Type: application/json" \
-  -d '{"isDone":true}'
-
-# 예상 응답:
-# { "success": false, "message": "데이터를 찾을 수 없습니다" }
-
-# ✅ getTodo 의 NotFoundError 분기
-curl http://localhost:3000/todos/99999
-# → 404 + { "success": false, "message": "Todo를 찾을 수 없습니다" }
+git checkout practice-6   # 마지막 실습 브랜치
+git checkout practice-1   # 처음부터
 ```
-
----
-
-## 💡 리팩토링 비교 (예시)
-
-**Before (practice-5):**
-```js
-export const deleteTodo = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.todo.delete({ where: { id: parseInt(id) } });
-    res.json({ success: true, message: 'Todo가 삭제되었습니다' });
-  } catch (error) {
-    if (error.code === 'P2025') {
-      return res.status(404).json({ success: false, message: 'Todo를 찾을 수 없습니다' });
-    }
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-```
-
-**After (practice-6 — 이미 적용된 모습):**
-```js
-export const deleteTodo = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  await prisma.todo.delete({ where: { id: parseInt(id) } });
-  res.json({ success: true, message: 'Todo가 삭제되었습니다' });
-});
-// P2025 처리는 asyncHandler 안에서 알아서!
-```
-
----
-
-## 💡 막히면?
-
-```bash
-git checkout reference   # 완성본 정답
-git checkout practice-6  # 다시 돌아오기
-```
-
----
-
-## 🎉 축하합니다!
-
-이 브랜치까지 완료했다면 Prisma + Express 백엔드의 **기본 패턴 대부분을 직접 손으로 만들어 본 셈**이에요. 다음은 관계(Relations) + 트랜잭션 + 인증 + 테스트 + 배포로 확장해 봅시다!

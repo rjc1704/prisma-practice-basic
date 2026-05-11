@@ -66,15 +66,12 @@ export const getAllTodos = asyncHandler(async (req, res) => {
   });
 });
 
-// ✏️ TODO-3: 아래 ___ 를 채우세요.
-//   Todo 가 없을 때 던질 커스텀 에러 클래스 이름은? (이 파일 상단 import 참고)
-//   asyncHandler 가 이 에러를 받아서 404 응답을 보내줍니다.
 export const getTodo = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const todo = await prisma.todo.findUnique({
     where: { id: parseInt(id) }
   });
-  if (!todo) throw new ___('Todo를 찾을 수 없습니다');         // ← TODO-3
+  if (!todo) throw new NotFoundError('Todo를 찾을 수 없습니다');
   res.json({ success: true, data: todo });
 });
 
