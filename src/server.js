@@ -35,14 +35,11 @@ app.get('/todos', getAllTodos);
 app.get('/todos/:id', getTodo);
 
 // CREATE
-// ✏️ TODO-3: 아래 ___ 두 군데를 채우세요. (같은 함수 이름을 두 번 씁니다)
-//   POST /todos 와 PATCH /todos/:id 앞에 검증 미들웨어를 끼우려고 합니다.
-//   미들웨어 함수 이름은? (위 import 줄을 보세요)
-app.post('/todos', ___(createTodoSchema), createTodo);      // ← TODO-3
+app.post('/todos', validate(createTodoSchema), createTodo);
 
 // UPDATE
 app.put('/todos/upsert', upsertTodo);
-app.patch('/todos/:id', ___(updateTodoSchema), updateTodo); // ← TODO-3 (같은 답)
+app.patch('/todos/:id', validate(updateTodoSchema), updateTodo);
 
 // DELETE
 app.delete('/todos/:id', deleteTodo);
