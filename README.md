@@ -1,35 +1,36 @@
-# practice-9 — User ↔ Profile 일대일 (1:1) 관계
+# practice-10 — Relation onDelete (Cascade)
 
-> 📚 **[3] 관계 챕터 3 (실습#9)** 에 해당해요.
+> 📚 **[3] 관계 챕터 4 (실습#10)** 에 해당해요.
 
 ## 🎯 이번 브랜치 목표
 
-`Profile` 모델을 추가해서 **한 사용자가 프로필 0~1 개**를 가질 수 있게 합니다. 1:1 은 1:N 에서 단 한 줄만 바뀌어요 — 외래 키에 `@unique` 가 붙는 게 전부.
+"**부모가 삭제되면 자식은 어떻게 되나?**" 를 명시적으로 정합니다. 우리 도메인에서는 **사용자 탈퇴 = 그 사용자의 Todo / Profile 도 함께 삭제** 가 자연스러우니 `Cascade` 를 적용합니다.
 
 ```
-User  1 ─── 1  Profile     (Profile 은 선택적: 있을 수도, 없을 수도)
-       profile?       userId Int @unique
+User 삭제
+  ↓ (Cascade)
+  ├─ 그 User 의 Todo 들 자동 삭제
+  └─ 그 User 의 Profile 자동 삭제
 ```
 
-> 💡 **1:N 과 1:1 의 차이는 단 한 단어** — 외래 키에 `@unique` 만 추가하면 됩니다. Prisma 가 이걸 보고 "아 1:1 이구나" 하고 알아채요.
+> 💡 onDelete 4가지 옵션 — `Restrict`(기본, 자식 있으면 부모 못 지움) / `Cascade`(같이 삭제) / `SetNull`(자식의 외래 키를 NULL) / `NoAction`(DB 위임). 도메인에 따라 의도적으로 선택.
 
 ---
 
 ## ✅ 이전 브랜치까지 완료된 것
 
-- ✅ User / Todo / Tag 모델 + **1:N + N:M** 관계
-- ✅ 시드: 사용자 2 + 태그 3 + Todo 4 (태그 연결) + 랜덤 30
-- ✅ 라우트: Todo CRUD 6, `GET /users/:userId/todos`, `GET /tags`
+- ✅ User + Todo + Tag + Profile 모델
+- ✅ 1:N / N:M / 1:1 세 가지 관계 모두 정의
+- ✅ 라우트: Todo CRUD, `GET /users/:userId/todos`, `GET /tags`, `GET /users/:id`
 
 ---
 
 ## ✅ TODO 체크리스트
 
-> 🗂 **총 3 곳**.
+> 🗂 **총 2 곳** — 핵심 키워드 한 단어를 두 번.
 
-- [ ] **TODO-1**: `prisma/schema.prisma` — `User.profile ___` 빈칸 1 (단수형 + 선택적)
-- [ ] **TODO-2**: `prisma/schema.prisma` — `Profile.userId Int ___` 빈칸 1 (1:1 표시 속성)
-- [ ] **TODO-3**: `prisma/seed.js` — Alice 생성 시 Profile 도 동시에 만드는 키워드 `profile: { ___: {...} }` 빈칸 1
+- [ ] **TODO-1**: `prisma/schema.prisma` — `Todo.user @relation(..., onDelete: ___)` 빈칸 1
+- [ ] **TODO-2**: `prisma/schema.prisma` — `Profile.user @relation(..., onDelete: ___)` 빈칸 1 (같은 답)
 
 ---
 
@@ -37,52 +38,66 @@ User  1 ─── 1  Profile     (Profile 은 선택적: 있을 수도, 없을 �
 
 ```bash
 # 1. (TODO-1, 2 채운 뒤) 마이그레이션
-npx prisma migrate dev --name add_profile
+npx prisma migrate dev --name add_on_delete_cascade
 
-# 2. (TODO-3 채운 뒤) 시드 재실행
-npm run seed
-
-# 3. 서버 실행
+# 2. 서버 실행
 npm run dev
 ```
+
+> ⚠️ 시드 재실행은 굳이 필요 없어요. 이번 챕터는 스키마 메타데이터(FK 제약)만 변경.
 
 ---
 
 ## 🧪 동작 확인
 
 ```bash
-# Alice — 프로필 있음
-curl http://localhost:3000/users/1
-# → { success: true, data: { id: 1, name: 'Alice', profile: { bio: '...', avatarUrl: '...' } } }
+# 1. Alice 삭제 전 — Todo 개수 확인
+curl http://localhost:3000/users/1/todos | head -50
+#   → Alice 의 Todo 가 여러 개 보임
 
-# Bob — 프로필 없음
-curl http://localhost:3000/users/2
-# → { success: true, data: { id: 2, name: 'Bob', profile: null } }
+# 2. Alice 삭제 — Cascade 작동!
+curl -X DELETE http://localhost:3000/users/1
+#   → { success: true, message: 'User가 삭제되었습니다 ...' }
+
+# 3. Alice 의 Todo 가 모두 사라졌는지 확인
+curl http://localhost:3000/users/1/todos
+#   → { success: true, count: 0, data: [] }
+
+# 4. Alice 의 Profile 도 사라졌는지 확인 — 404 (Alice 자체가 없음)
+curl http://localhost:3000/users/1
+#   → { success: false, message: 'User를 찾을 수 없습니다' }
 ```
+
+만약 onDelete 가 `Restrict` (기본값) 라면 2번에서 **에러**가 떨어집니다:
+```json
+{ "success": false, "message": "데이터를 찾을 수 없습니다" }
+```
+혹은 더 정확한 메시지로 "Foreign key constraint violated" — 자식이 있어서 부모 삭제 거부.
 
 ---
 
-## 💡 1:1 의 핵심 한 문장
+## 💡 Cascade 가 항상 정답은 아니에요
 
-> 외래 키에 **`@unique`** 만 붙이면 1:1 이 됩니다. "같은 userId 가진 Profile 행이 두 개 존재할 수 없다" 라는 의미.
+도메인에 따라 **`Restrict` 가 더 안전한 경우**도 많습니다. 예:
+- 결제 정보처럼 함부로 지우면 안 되는 도메인 → `Restrict`
+- 게시글이 사라지면 댓글도 같이 사라져야 자연스러움 → `Cascade`
+- 회원 탈퇴 후에도 작성 글은 익명으로 남기고 싶음 → `SetNull` (외래 키가 nullable 여야 함)
 
-또 — `User.profile` 처럼 1쪽 면을 적을 때 **단수형(`Profile?`)** 으로 적어야 해요. 1:N 의 `Todo[]` 와 다른 점.
-
-중첩 `create` 패턴은 다른 관계(1:N, N:M) 에서도 동일하게 쓸 수 있어요. 회원가입 시 "사용자 + 프로필 한 번에 생성" 같은 시나리오에서 자주 등장.
+**N:M 의 중간 테이블** (`_TodoToTag`) 은 Prisma 가 알아서 정리합니다. Todo 삭제 → `_TodoToTag` 의 해당 행만 자동 삭제. Tag 자체는 그대로 (다른 Todo 가 쓸 수 있으니까).
 
 ---
 
 ## 🧠 막히면?
 
 ```bash
-git checkout practice-10   # 다음 (onDelete)
+git checkout practice-11   # 다음 (include / select / 관계 필터링)
 git checkout reference     # 전체 정답
-git checkout practice-9    # 복귀
+git checkout practice-10   # 복귀
 ```
 
 ---
 
 ## 📚 교안 참고 포인트
 
-- **3. User—Profile 1:1 스키마 패턴** — 외래 키에 `@unique`. 1쪽 면은 `Profile?` 단수.
-- **중첩 create** — `create` 안에 또 `create` 를 넣어 한 트랜잭션 안에서 두 행을 동시 생성.
+- **4. Relation 의 onDelete 설정** — 4 옵션 중 Cascade / Restrict 가 90% 차지.
+- **Prisma SQL 출력 확인** — `prisma migrate dev` 로 생성된 `migration.sql` 안 `ON DELETE CASCADE` 구문이 들어 있는지 보면 학습에 도움이 돼요.

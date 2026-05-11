@@ -11,6 +11,7 @@ import {
   getUserTodos,
   getAllTags,
   getUserWithProfile,
+  deleteUser,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -55,6 +56,7 @@ app.get('/tags', getAllTags);
 
 // ---------------- User + Profile (1:1) ----------------
 app.get('/users/:id', getUserWithProfile);
+app.delete('/users/:id', deleteUser);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

@@ -15,25 +15,23 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String
   todos     Todo[]
-
-  // ✏️ TODO-1: User 와 Profile 의 1:1 관계 — 사용자는 프로필을 가질 수도 / 안 가질 수도.
-  //   힌트: 1:N 의 1쪽이 `Profile[]` 이었다면, 1:1 의 1쪽은 단수 + "선택적" 표시가 붙어요.
-  //         (단수형 + 물음표(?))
-  profile   ___                                              // ← TODO-1
-
+  profile   Profile?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
+// ✏️ TODO-1: User 가 삭제되면 그 User 의 Todo 도 같이 삭제되어야 자연스럽죠.
+//   아래 @relation(...) 안에 어떤 옵션을 추가해야 "부모 삭제 시 자식도 자동 삭제" 가 될까요?
+//   힌트: "Restrict / Cascade / SetNull / NoAction" 중 — "물줄기처럼 전파" 라는 영어 단어.
 model Todo {
   id        Int      @id @default(autoincrement())
   title     String
   content   String?
   isDone    Boolean  @default(false)
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: ___)   // ← TODO-1
   tags      Tag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,15 +47,14 @@ model Tag {
   @@map("tags")
 }
 
-// ✏️ TODO-2: Profile 의 외래 키(userId) 에 "이게 1:1 이다" 를 표시하는 속성은?
-//   힌트: 한 사용자는 프로필 하나만! → 같은 userId 가 두 행에 있을 수 없음.
-//          1:N 의 N쪽과 비교했을 때 딱 한 단어가 추가됩니다.
+// ✏️ TODO-2: User 가 삭제되면 그 User 의 Profile 도 자동 삭제되어야 합니다.
+//   Todo 와 똑같은 옵션을 Profile 에도 추가하세요.
 model Profile {
   id        Int     @id @default(autoincrement())
   bio       String?
   avatarUrl String?
-  userId    Int     ___                                      // ← TODO-2
-  user      User    @relation(fields: [userId], references: [id])
+  userId    Int     @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: ___)    // ← TODO-2
 
   @@map("profiles")
 }

@@ -139,3 +139,11 @@ export const getUserWithProfile = asyncHandler(async (req, res) => {
   if (!user) throw new NotFoundError('User를 찾을 수 없습니다');
   res.json({ success: true, data: user });
 });
+
+// ---------------- User 삭제 (Cascade 검증용) ----------------
+
+export const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await prisma.user.delete({ where: { id: parseInt(id) } });
+  res.json({ success: true, message: 'User가 삭제되었습니다 (Todo / Profile 도 자동 삭제)' });
+});

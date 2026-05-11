@@ -14,16 +14,12 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('🧹 기존 데이터 삭제 완료');
 
-  // ----------- 사용자 + Profile 시드 -----------
-  //
-  // ✏️ TODO-3: Alice 만들면서 동시에 Profile 도 함께 만들기 — 중첩 create 패턴.
-  //   힌트: `profile: { ___: { ... } }` — User 안에 Profile 을 "함께 새로 만들겠다" 는 키워드는?
-  //          (이미 있는 Profile 을 연결하는 게 아니라 새로 만드는 것!)
+  // ----------- 사용자 + Profile -----------
   const alice = await prisma.user.create({
     data: {
       name: 'Alice',
       profile: {
-        ___: {                                                // ← TODO-3
+        create: {
           bio: '풀스택 개발 공부 중',
           avatarUrl: 'https://example.com/alice.png'
         }
@@ -31,11 +27,10 @@ async function main() {
     },
     include: { profile: true }
   });
-  // Bob 은 프로필 없음 (1:1 의 1쪽이 선택적이라 가능!)
   const bob = await prisma.user.create({ data: { name: 'Bob' } });
   console.log('👥 사용자 2명 생성 (Alice: 프로필 있음, Bob: 없음)');
 
-  // ----------- 태그 시드 -----------
+  // ----------- 태그 -----------
   const tagHome   = await prisma.tag.create({ data: { name: '집안일' } });
   const tagStudy  = await prisma.tag.create({ data: { name: '공부'   } });
   const tagHealth = await prisma.tag.create({ data: { name: '건강'   } });
