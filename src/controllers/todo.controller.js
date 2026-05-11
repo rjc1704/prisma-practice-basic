@@ -118,3 +118,12 @@ export const getUserTodos = asyncHandler(async (req, res) => {
 
   res.json({ success: true, count: todos.length, data: todos });
 });
+
+// ---------------- Tag (N:M) ----------------
+
+export const getAllTags = asyncHandler(async (req, res) => {
+  const tags = await prisma.tag.findMany({
+    orderBy: { name: 'asc' }
+  });
+  res.json({ success: true, count: tags.length, data: tags });
+});

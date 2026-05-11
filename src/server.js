@@ -9,6 +9,7 @@ import {
   getAllTodos,
   getTodo,
   getUserTodos,
+  getAllTags,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -47,6 +48,9 @@ app.delete('/todos/:id', deleteTodo);
 
 // ---------------- User ↔ Todo (1:N) ----------------
 app.get('/users/:userId/todos', getUserTodos);
+
+// ---------------- Tag (N:M) ----------------
+app.get('/tags', getAllTags);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

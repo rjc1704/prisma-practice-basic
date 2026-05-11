@@ -34,8 +34,19 @@ model Todo {
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
 
+  // N:M — Tag 양쪽 모두 배열 필드. 외래 키 없음(_TodoToTag 중간 테이블 자동 생성).
+  tags      Tag[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("todos")
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  todos Todo[]
+
+  @@map("tags")
 }

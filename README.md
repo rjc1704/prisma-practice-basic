@@ -1,17 +1,16 @@
 # reference — 전체 정답 (완성본)
 
-> 🎓 **챕터 1~10 + [3] 관계 챕터 1 (User-Todo 1:N)** 까지의 정답이 들어 있어요.
-> 막힐 때 비교용으로 참고하세요. ([3] 관계의 N:M, 1:1, onDelete, 트랜잭션 등은 후속 실습 브랜치에서 누적됩니다.)
+> 🎓 **챕터 1~10 + [3] 관계 챕터 1~2 (1:N + N:M)** 까지의 정답이 들어 있어요.
+> 후속 챕터(1:1, onDelete, 트랜잭션 등) 는 다음 실습 브랜치에서 누적됩니다.
 
 ## 🎯 이 브랜치가 다루는 것
 
-- ✅ User + Todo 모델 + **User ↔ Todo 1:N 관계** (`todos[]` / `userId` / `@relation(...)`)
-- ✅ 시드 (사용자 2명 + 정해진 Todo 4개 + faker 30개 — 모든 Todo 에 `userId` 부여)
-- ✅ Todo CRUD 6개 (create / getAll / getOne / update / upsert / delete)
-- ✅ 쿼리 파라미터 — `isDone` / `search` / `sort` / `page` / `limit`
-- ✅ Zod 스키마 + `validate` 미들웨어 (createTodoSchema 에 `userId` 필수 포함)
-- ✅ `asyncHandler` 안에서 모든 에러 종류별 처리 (Zod / Prisma / AppError / 그 외)
-- ✅ `GET /users/:userId/todos` — 특정 사용자의 Todo 목록
+- ✅ User + Todo + **Tag** 모델
+- ✅ User ↔ Todo **1:N** (`todos[]` / `userId` / `@relation(...)`)
+- ✅ Todo ↔ Tag **N:M** (`tags[]` / `todos[]` / Prisma 자동 중간 테이블 `_TodoToTag`)
+- ✅ 시드 (사용자 2 + 태그 3 + 정해진 Todo 4 with tags + faker 30)
+- ✅ Todo CRUD 6 + 쿼리 파라미터 + Zod + asyncHandler
+- ✅ `GET /users/:userId/todos` (1:N) / `GET /tags` (N:M 검증용)
 
 ---
 
@@ -71,12 +70,13 @@ prisma-practice/
 | PATCH  | `/todos/:id`         | 수정 (Zod 검증, 없으면 404) |
 | DELETE | `/todos/:id`         | 삭제 (없으면 404) |
 | GET    | `/users/:userId/todos` | 특정 사용자의 Todo 목록 (1:N 관계) |
+| GET    | `/tags`              | 전체 태그 목록 (N:M 검증용) |
 
 ---
 
 ## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-git checkout practice-7   # 마지막 실습 브랜치 (User-Todo 1:N)
+git checkout practice-8   # 마지막 실습 브랜치 (Todo-Tag N:M)
 git checkout practice-1   # 처음부터
 ```
