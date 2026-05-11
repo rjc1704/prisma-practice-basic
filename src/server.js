@@ -10,11 +10,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// TODO-3: JSON 요청 본문을 파싱할 수 있도록 express.json() 미들웨어를 등록하세요.
-//   힌트: app.use(...)
+app.use(express.json());
 
-
-// 헬스 체크 — 서버가 살아있는지 확인하는 용도
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });

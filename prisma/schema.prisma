@@ -1,13 +1,6 @@
 // ============================================
 // Prisma 스키마 정의 파일
 // ============================================
-//
-// 이 파일이 우리 DB 구조의 "설계도"입니다.
-// 모델을 정의하고 `npx prisma migrate dev`를 실행하면
-// Prisma가 SQL을 만들어 DB에 테이블을 생성해줘요.
-//
-// 💡 generator 와 datasource 블록은 `npx prisma init` 으로 자동 생성된
-//    부분이라 그대로 둡니다. 우리는 model 만 추가해 나가면 돼요.
 
 generator client {
   provider = "prisma-client-js"
@@ -18,18 +11,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-// TODO-1: User 모델을 작성하세요.
+  @@map("users")
+}
+
+
+// TODO-1: Todo 모델을 작성하세요.
 //   필드:
-//     - id        Int      자동 증가 PK         (@id @default(autoincrement()))
-//     - name      String   사용자 이름 (필수)
-//     - createdAt DateTime 기본값: 현재 시간     (@default(now()))
-//     - updatedAt DateTime 자동 업데이트         (@updatedAt)
-//   테이블 매핑: @@map("users")
+//     - id        Int      자동 증가 PK            (@id @default(autoincrement()))
+//     - title     String   제목 (필수)
+//     - content   String?  내용 (선택 — NULL 허용)
+//     - isDone    Boolean  완료 여부 (기본값 false) (@default(false))
+//     - createdAt DateTime 기본값: 현재 시간        (@default(now()))
+//     - updatedAt DateTime 자동 업데이트            (@updatedAt)
+//   테이블 매핑: @@map("todos")
 //
-//   힌트: 교안 2챕터의 (1) 기본 User 모델 그대로!
+//   힌트: 교안 4챕터의 (1) prisma/schema.prisma 작성 참고
 //
-// model User {
+// model Todo {
 //   ???
-//   @@map("users")
+//   @@map("todos")
 // }
