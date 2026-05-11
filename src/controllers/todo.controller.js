@@ -175,3 +175,45 @@ export const getTodosLite = asyncHandler(async (req, res) => {
   });
   res.json({ success: true, count: todos.length, data: todos });
 });
+
+// ---------------- Todo 에 Tag 추가 (connectOrCreate) ----------------
+
+export const addTagToTodo = asyncHandler(async (req, res) => {
+  const { todoId } = req.params;
+  const { name } = req.body;
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        connectOrCreate: {
+          where:  { name },
+          create: { name }
+        }
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.status(201).json({ success: true, data: todo });
+});
+
+export const addTagsBulk = asyncHandler(async (req, res) => {
+  const { todoId } = req.params;
+  const { names } = req.body;
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        connectOrCreate: names.map(name => ({
+          where:  { name },
+          create: { name }
+        }))
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.status(201).json({ success: true, data: todo });
+});
