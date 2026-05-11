@@ -1,25 +1,24 @@
-# practice-13 — `disconnect` / `set` 로 관계 해제 · 교체
+# practice-14 — `updateMany` 로 일괄 처리
 
-> 📚 **[3] 관계 챕터 9 (실습#13)** 에 해당해요. (Ch6 Computed 필드는 심화 — 제외)
+> 📚 **[3] 관계 챕터 10 (실습#14)** 에 해당해요.
 
 ## 🎯 이번 브랜치 목표
 
-태그를 **떼거나 통째로 갈아 끼우는** 두 가지 도구를 익힙니다.
+"**오늘 할 일 모두 완료**" 같은 비즈니스 시나리오를 한 번의 SQL 로 처리합니다. 핵심은 `updateMany` 와 그 안에 들어가는 **관계 조건 결합**.
 
 ```
-[disconnect]  특정 연결 끊기 (Tag 자체는 살아 있음)
-[set]         기존 연결 모두 끊고, 명시한 목록으로 통째 교체
-[deleteMany]  연결 + Tag 자체까지 삭제 ← 거의 안 씁니다 (다른 Todo 가 쓸 수 있어서 위험!)
+PATCH /users/1/todos/complete-all
+  ↓ updateMany 한 번으로 Alice 의 미완료 Todo 가 한꺼번에 isDone: true
 ```
 
-> 💡 **disconnect vs deleteMany 헷갈리지 마세요** — Tag 는 보통 여러 Todo 가 공유해요. "이 Todo 와만 연결을 끊기" 가 disconnect, "Tag 행 자체를 DB 에서 지우기" 가 deleteMany.
+> ⚠️ **`where` 에 반드시 `userId` 가 들어가야 합니다.** 빼먹으면 모든 사용자의 Todo 가 일괄 완료 되는 사고가 납니다! `updateMany` / `deleteMany` 류는 코드 리뷰를 특히 꼼꼼히.
 
 ---
 
 ## ✅ 이전 브랜치까지 완료된 것
 
-- ✅ 관계 4종 + 관계 조회 + `connectOrCreate` 로 태그 추가
-- ✅ 라우트: 거의 다 (Todo CRUD, 1:N/N:M/1:1 조회, tag 추가 등)
+- ✅ 관계 4종 + 모든 조회 / 추가 / 해제 패턴
+- ✅ 라우트: Todo CRUD, 1:N/N:M/1:1 검증, connectOrCreate, disconnect/set
 
 ---
 
@@ -27,8 +26,8 @@
 
 > 🗂 **총 2 곳**. 모두 `src/controllers/todo.controller.js`.
 
-- [ ] **TODO-1**: `removeTagFromTodo` — `tags: { ___: { id } }` 빈칸 1 (특정 연결만 끊기)
-- [ ] **TODO-2**: `replaceTodoTags` — `tags: { ___: tagIds.map(...) }` 빈칸 1 (통째 교체)
+- [ ] **TODO-1**: `completeAllTodosForUser` — `prisma.todo.___({ where, data })` 빈칸 1 (여러 행 한 번에 업데이트)
+- [ ] **TODO-2**: `completeTodosByTag` — `tags: { ___: { name: tagName } }` 빈칸 1 (Ch5 의 some/every/none 중)
 
 ---
 
@@ -43,53 +42,51 @@ npm run dev
 ## 🧪 동작 확인 (cURL)
 
 ```bash
-# 1. Todo 1 의 현재 태그 확인
-curl http://localhost:3000/todos/1/full
-#   → tags: [ { id: 1, name: '집안일' }, { id: 5, name: '중요' } ] 같은 모양
+# 0. Alice 의 미완료 Todo 개수 확인 (참고용)
+curl "http://localhost:3000/users/1/todos" | grep -c '"isDone":false'
 
-# 2. Tag id=1 (집안일) 만 떼기 — disconnect
-curl -X DELETE http://localhost:3000/todos/1/tags/1
-#   → 응답의 tags 에서 '집안일' 빠짐. 다른 Todo 의 '집안일' 은 그대로 살아 있음!
+# 1. Alice 의 미완료 Todo 일괄 완료
+curl -X PATCH http://localhost:3000/users/1/todos/complete-all
+# → { "success": true, "completedCount": 7 }
 
-# 3. Todo 1 의 태그를 [3] (건강) 하나로 통째 교체 — set
-curl -X PUT http://localhost:3000/todos/1/tags \
-  -H "Content-Type: application/json" \
-  -d '{"tagIds":[3]}'
-#   → tags: [{ id: 3, name: '건강' }] 만 남음. 기존 연결 모두 끊김.
+# 2. 다시 한 번 호출 — 이미 다 완료라 0개
+curl -X PATCH http://localhost:3000/users/1/todos/complete-all
+# → { "success": true, "completedCount": 0 }
 
-# 4. 빈 배열로 set — 모든 태그 연결 해제 (위험할 수 있음 — 클라이언트 validation 필수!)
-curl -X PUT http://localhost:3000/todos/1/tags \
-  -H "Content-Type: application/json" \
-  -d '{"tagIds":[]}'
-#   → tags: []
+# 3. 태그별 — Alice 의 '집안일' 태그 붙은 미완료 Todo 만
+curl -X PATCH http://localhost:3000/users/1/todos/complete-by-tag/집안일
 ```
 
 ---
 
-## 💡 N:M 조작 4종 비교 (Todo 의 tags 기준)
+## 💡 `updateMany` 안전 체크리스트
 
-상태: `Todo(id=1) → [공부, 중요]`
+쿼리를 한 번 실행하면 N개 행을 모두 바꾸니까, 작성 시 다음을 점검하세요:
 
-| 키워드 | 동작 | 결과 |
-|---|---|---|
-| `connect: { id: 5 }` | 기존 유지 + 추가 | `[공부, 중요, 오늘]` |
-| `disconnect: { id: 1 }` | 특정 연결만 끊기 | `[중요]` (`공부` Tag 는 DB에 살아 있음) |
-| `set: [{ id: 7 }]` | 전부 끊고 새로 | `[급함]` |
-| `deleteMany: ...` | 연결 + Tag 자체 삭제 | ⚠️ 다른 Todo 가 쓰는 Tag 까지 사라짐 |
+1. ✅ `where` 에 사용자 식별자 (userId 등) 가 들어 있나? — 권한 누수 방지
+2. ✅ `where` 에 "이미 처리된 행 제외" 조건이 있나? (예: `isDone: false`)
+3. ✅ `data` 가 한 줄짜리 변경만 하나? — 복잡하면 `update` 를 N번 도는 게 안전할 수도
+
+`updateMany` 가 안 맞는 경우:
+- 행마다 다른 값을 줘야 하는데 SQL 한 번으론 불가능 → `for` 안에서 `update` (느리지만 정확)
+- 결과를 받은 행들 정보가 필요한 경우 → `updateMany` 는 `{ count }` 만 반환. 그땐 별도 `findMany` 호출.
 
 ---
 
-## 💡 1:N 에서의 disconnect 는 보통 안 됨
+## 💡 관계 조건 + updateMany 조합
 
-`Todo.userId Int` (NOT NULL) 이라 disconnect 시 "FK 가 null 이 될 수 없다" 에러.
-대신 **다른 사용자로 이관**(userId 직접 수정) 이 자연스러워요.
+이 챕터의 진짜 묘미. **5번 챕터에서 배운 `some / every / none` 이 그대로 적용** 돼요.
 
 ```js
-// ❌ 1:N 에서 disconnect — userId 가 NOT NULL 이면 에러
-await prisma.todo.update({ where: { id: 1 }, data: { user: { disconnect: true } } });
-
-// ✅ 다른 사용자로 이관
-await prisma.todo.update({ where: { id: 1 }, data: { userId: 5 } });
+// "집안일 태그 붙은" 미완료 Todo 일괄 완료
+prisma.todo.updateMany({
+  where: {
+    userId: 1,
+    isDone: false,
+    tags: { some: { name: '집안일' } }
+  },
+  data: { isDone: true }
+});
 ```
 
 ---
@@ -97,14 +94,14 @@ await prisma.todo.update({ where: { id: 1 }, data: { userId: 5 } });
 ## 🧠 막히면?
 
 ```bash
-git checkout practice-14   # 다음 (updateMany 일괄 처리)
+git checkout practice-15   # 다음 (트랜잭션)
 git checkout reference     # 전체 정답
-git checkout practice-13   # 복귀
+git checkout practice-14   # 복귀
 ```
 
 ---
 
 ## 📚 교안 참고 포인트
 
-- **9. 관련된 객체 연결 / 연결 해제** — `connect` / `disconnect` / `set` / `deleteMany` 4종 비교.
-- **`set` 의 함정** — 빈 배열도 유효한 입력. 클라이언트 검증 필수.
+- **10. 비즈니스 로직: 일괄 완료** — `updateMany` + 관계 조건 결합.
+- **권한 분리** — `where` 에 사용자 식별자 누락 = 보안 사고.

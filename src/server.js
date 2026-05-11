@@ -19,6 +19,8 @@ import {
   addTagsBulk,
   removeTagFromTodo,
   replaceTodoTags,
+  completeAllTodosForUser,
+  completeTodosByTag,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -77,6 +79,10 @@ app.post('/todos/:todoId/tags/bulk', addTagsBulk);
 // ---------------- Tag 해제 (Ch9 — disconnect / set) ----------------
 app.delete('/todos/:todoId/tags/:tagId', removeTagFromTodo);
 app.put('/todos/:todoId/tags', replaceTodoTags);
+
+// ---------------- 일괄 처리 (Ch10 — updateMany) ----------------
+app.patch('/users/:userId/todos/complete-all', completeAllTodosForUser);
+app.patch('/users/:userId/todos/complete-by-tag/:tagName', completeTodosByTag);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
