@@ -87,11 +87,11 @@ export const updateTodo = asyncHandler(async (req, res) => {
 });
 
 export const upsertTodo = asyncHandler(async (req, res) => {
-  const { id, title, content, isDone } = req.body;
+  const { id, title, content, isDone, userId } = req.body;
   const todo = await prisma.todo.upsert({
     where:  { id },
     update: { title, content, isDone },
-    create: { title, content, isDone: isDone ?? false }
+    create: { title, content, isDone: isDone ?? false, userId }
   });
   res.json({ success: true, data: todo });
 });
@@ -104,4 +104,17 @@ export const deleteTodo = asyncHandler(async (req, res) => {
     where: { id: parseInt(id) }
   });
   res.json({ success: true, message: 'Todo가 삭제되었습니다' });
+});
+
+// ---------------- User ↔ Todo (1:N) ----------------
+
+export const getUserTodos = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const todos = await prisma.todo.findMany({
+    where: { userId: parseInt(userId) },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  res.json({ success: true, count: todos.length, data: todos });
 });

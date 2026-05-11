@@ -1,15 +1,17 @@
 # reference — 전체 정답 (완성본)
 
-> 🎓 **모든 챕터 (1~10) 의 정답** 이 들어 있어요. 막힐 때 비교용으로 참고하세요.
+> 🎓 **챕터 1~10 + [3] 관계 챕터 1 (User-Todo 1:N)** 까지의 정답이 들어 있어요.
+> 막힐 때 비교용으로 참고하세요. ([3] 관계의 N:M, 1:1, onDelete, 트랜잭션 등은 후속 실습 브랜치에서 누적됩니다.)
 
 ## 🎯 이 브랜치가 다루는 것
 
-- ✅ User + Todo 모델
-- ✅ 시드 (사용자 2명 + 정해진 Todo 4개 + faker 30개)
+- ✅ User + Todo 모델 + **User ↔ Todo 1:N 관계** (`todos[]` / `userId` / `@relation(...)`)
+- ✅ 시드 (사용자 2명 + 정해진 Todo 4개 + faker 30개 — 모든 Todo 에 `userId` 부여)
 - ✅ Todo CRUD 6개 (create / getAll / getOne / update / upsert / delete)
 - ✅ 쿼리 파라미터 — `isDone` / `search` / `sort` / `page` / `limit`
-- ✅ Zod 스키마 + `validate` 미들웨어
+- ✅ Zod 스키마 + `validate` 미들웨어 (createTodoSchema 에 `userId` 필수 포함)
 - ✅ `asyncHandler` 안에서 모든 에러 종류별 처리 (Zod / Prisma / AppError / 그 외)
+- ✅ `GET /users/:userId/todos` — 특정 사용자의 Todo 목록
 
 ---
 
@@ -68,12 +70,13 @@ prisma-practice/
 | PUT    | `/todos/upsert`      | 있으면 수정, 없으면 생성 |
 | PATCH  | `/todos/:id`         | 수정 (Zod 검증, 없으면 404) |
 | DELETE | `/todos/:id`         | 삭제 (없으면 404) |
+| GET    | `/users/:userId/todos` | 특정 사용자의 Todo 목록 (1:N 관계) |
 
 ---
 
 ## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-git checkout practice-6   # 마지막 실습 브랜치
+git checkout practice-7   # 마지막 실습 브랜치 (User-Todo 1:N)
 git checkout practice-1   # 처음부터
 ```

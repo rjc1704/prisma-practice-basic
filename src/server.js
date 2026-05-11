@@ -8,6 +8,7 @@ import {
   createTodo,
   getAllTodos,
   getTodo,
+  getUserTodos,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -43,6 +44,9 @@ app.patch('/todos/:id', validate(updateTodoSchema), updateTodo);
 
 // DELETE
 app.delete('/todos/:id', deleteTodo);
+
+// ---------------- User ↔ Todo (1:N) ----------------
+app.get('/users/:userId/todos', getUserTodos);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
