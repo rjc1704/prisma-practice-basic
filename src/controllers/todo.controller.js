@@ -176,11 +176,8 @@ export const getTodosLite = asyncHandler(async (req, res) => {
   res.json({ success: true, count: todos.length, data: todos });
 });
 
-// ---------------- Todo 에 Tag 추가 ([3] Ch7-8 — connectOrCreate) ----------------
+// ---------------- Todo 에 Tag 추가 (connectOrCreate) ----------------
 
-// ✏️ TODO-1: "있으면 연결, 없으면 새로 만들어서 연결" 하는 키워드는?
-//   힌트: connect / create / connectOrCreate 중 — 이름 그대로 의미가 살아 있는 키워드.
-//   (connect 는 "있는 것만 연결" — 없으면 에러. create 는 "무조건 새로 만들기" — 중복 키 에러.)
 export const addTagToTodo = asyncHandler(async (req, res) => {
   const { todoId } = req.params;
   const { name } = req.body;
@@ -189,7 +186,7 @@ export const addTagToTodo = asyncHandler(async (req, res) => {
     where: { id: parseInt(todoId) },
     data: {
       tags: {
-        ___: {                                                // ← TODO-1
+        connectOrCreate: {
           where:  { name },
           create: { name }
         }
@@ -201,18 +198,15 @@ export const addTagToTodo = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: todo });
 });
 
-// ✏️ TODO-2: 여러 태그 이름 배열을 한 번에 처리하는 버전.
-//   tagNames.map(name => ({ where: { name }, create: { name } })) 형태로
-//   connectOrCreate 에 배열을 넘기면 됩니다. 똑같이 connectOrCreate 키워드 자리.
 export const addTagsBulk = asyncHandler(async (req, res) => {
   const { todoId } = req.params;
-  const { names } = req.body;   // ["급함", "오늘", "중요"]
+  const { names } = req.body;
 
   const todo = await prisma.todo.update({
     where: { id: parseInt(todoId) },
     data: {
       tags: {
-        ___: names.map(name => ({                             // ← TODO-2
+        connectOrCreate: names.map(name => ({
           where:  { name },
           create: { name }
         }))
@@ -222,4 +216,45 @@ export const addTagsBulk = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json({ success: true, data: todo });
+});
+
+// ---------------- Tag 해제 ([3] Ch9 — disconnect / set) ----------------
+
+// ✏️ TODO-1: Todo 에서 "특정 태그 연결만 끊기" 의 키워드는?
+//   힌트: disconnect / set / deleteMany 중 — "Tag 자체는 그대로 두고 이 Todo 와의 연결만 끊기".
+//          (deleteMany 는 Tag 행 자체를 지워버려요. 다른 Todo 가 쓰고 있을지도 모르는데 위험!)
+export const removeTagFromTodo = asyncHandler(async (req, res) => {
+  const { todoId, tagId } = req.params;
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        ___: { id: parseInt(tagId) }                          // ← TODO-1
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.json({ success: true, data: todo });
+});
+
+// ✏️ TODO-2: Todo 의 태그 목록을 "통째로 교체" 하는 키워드는?
+//   힌트: disconnect / set / replace 중 — "기존 연결 모두 끊고 새 목록으로 덮어쓰기".
+//          프론트 편집 화면에서 "최종 선택된 태그 목록" 만 받아서 한 번에 적용할 때 가장 자주 쓰여요.
+export const replaceTodoTags = asyncHandler(async (req, res) => {
+  const { todoId } = req.params;
+  const { tagIds } = req.body;   // [1, 5]
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        ___: tagIds.map(id => ({ id: parseInt(id) }))         // ← TODO-2
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.json({ success: true, data: todo });
 });
