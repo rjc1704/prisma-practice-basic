@@ -252,3 +252,30 @@ export const replaceTodoTags = asyncHandler(async (req, res) => {
 
   res.json({ success: true, data: todo });
 });
+
+// ---------------- 일괄 처리 (updateMany) ----------------
+
+export const completeAllTodosForUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const result = await prisma.todo.updateMany({
+    where: {
+      userId: parseInt(userId),
+      isDone: false
+    },
+    data: { isDone: true }
+  });
+  res.json({ success: true, completedCount: result.count });
+});
+
+export const completeTodosByTag = asyncHandler(async (req, res) => {
+  const { userId, tagName } = req.params;
+  const result = await prisma.todo.updateMany({
+    where: {
+      userId: parseInt(userId),
+      isDone: false,
+      tags: { some: { name: tagName } }
+    },
+    data: { isDone: true }
+  });
+  res.json({ success: true, completedCount: result.count });
+});
