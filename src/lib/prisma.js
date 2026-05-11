@@ -8,5 +8,5 @@
 // TODO-2: PrismaClient 를 import 하고, 인스턴스를 만든 뒤 default export 하세요.
 //   힌트:
 //     import { PrismaClient } from '@prisma/client';
-//     const prisma = new PrismaClient();
+//     const prisma =
 //     export default prisma;
