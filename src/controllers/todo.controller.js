@@ -279,3 +279,33 @@ export const completeTodosByTag = asyncHandler(async (req, res) => {
   });
   res.json({ success: true, completedCount: result.count });
 });
+
+// ---------------- Todo + Tag 안전 복사 ($transaction) ----------------
+
+export const copyTodo = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const copied = await prisma.$transaction(async (tx) => {
+    const source = await tx.todo.findUnique({
+      where: { id: parseInt(id) },
+      include: { tags: true }
+    });
+
+    if (!source) {
+      throw new NotFoundError('복사할 Todo 를 찾을 수 없습니다');
+    }
+
+    return tx.todo.create({
+      data: {
+        title:   source.title + ' (복사본)',
+        content: source.content,
+        userId:  source.userId,
+        isDone:  false,
+        tags: { connect: source.tags.map(t => ({ id: t.id })) }
+      },
+      include: { tags: true }
+    });
+  });
+
+  res.status(201).json({ success: true, data: copied });
+});

@@ -21,6 +21,7 @@ import {
   replaceTodoTags,
   completeAllTodosForUser,
   completeTodosByTag,
+  copyTodo,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -83,6 +84,9 @@ app.put('/todos/:todoId/tags', replaceTodoTags);
 // ---------------- 일괄 처리 (updateMany) ----------------
 app.patch('/users/:userId/todos/complete-all', completeAllTodosForUser);
 app.patch('/users/:userId/todos/complete-by-tag/:tagName', completeTodosByTag);
+
+// ---------------- Todo + Tag 안전 복사 ($transaction) ----------------
+app.post('/todos/:id/copy', copyTodo);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);

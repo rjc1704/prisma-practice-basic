@@ -1,12 +1,15 @@
 # reference — 전체 정답 (완성본)
 
-> 🎓 **챕터 1~10 + [3] 관계 챕터 1~10 (정의 / 조회 / 조작 / 일괄 처리)** 까지의 정답.
+> 🎓 **챕터 1~10 + [3] 관계 챕터 1~12 (관계 전 단원 + 트랜잭션)** 까지 누적 정답.
 
 ## 🎯 이 브랜치가 다루는 것
 
-- ✅ User + Todo + Tag + Profile 모델, **onDelete: Cascade** 적용
-- ✅ User 삭제 → Todo / Profile 자동 삭제
-- ✅ 라우트: Todo CRUD + 1:N / N:M / 1:1 검증 라우트 + `DELETE /users/:id`
+- ✅ User + Todo + Tag + Profile 모델 + **onDelete: Cascade**
+- ✅ 1:N / N:M / 1:1 모든 관계
+- ✅ 관계 조회 (`include` / `select` / `some`)
+- ✅ 관계 조작 (`connect` / `connectOrCreate` / `disconnect` / `set`)
+- ✅ `updateMany` 일괄 처리, `$transaction` 안전 복사
+- ✅ 라우트: Todo CRUD + 1:N / N:M / 1:1 / 태그 추가·해제·교체 / 일괄 완료 / 복사
 
 ---
 
@@ -78,12 +81,13 @@ prisma-practice/
 | PUT    | `/todos/:todoId/tags`        | Todo 태그 통째 교체 (set) |
 | PATCH  | `/users/:userId/todos/complete-all`            | 사용자의 미완료 Todo 일괄 완료 (updateMany) |
 | PATCH  | `/users/:userId/todos/complete-by-tag/:tagName` | 특정 태그 Todo 일괄 완료 (updateMany + some) |
+| POST   | `/todos/:id/copy`    | Todo + 태그 안전 복사 ($transaction 콜백) |
 
 ---
 
 ## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-git checkout practice-14  # 마지막 실습 브랜치 (updateMany)
+git checkout practice-15  # 마지막 실습 브랜치 ($transaction)
 git checkout practice-1   # 처음부터
 ```
