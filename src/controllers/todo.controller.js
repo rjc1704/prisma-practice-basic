@@ -8,9 +8,11 @@ import prisma from '../lib/prisma.js';
 
 export const createTodo = async (req, res) => {
   try {
-    const { title, content, isDone } = req.body;
+    // ✏️ TODO-4: 아래 ___ 를 채우세요.
+    //   validate 미들웨어가 통과시킨 깨끗한 데이터는 req.body 가 아닌 어디에 들어있나요?
+    //   (힌트: middlewares/validate.js 에서 우리가 `req.???? = ...` 형태로 저장했어요)
     const todo = await prisma.todo.create({
-      data: { title, content, isDone }
+      data: req.___                                          // ← TODO-4
     });
     res.status(201).json({ success: true, data: todo });
   } catch (error) {
@@ -22,55 +24,38 @@ export const createTodo = async (req, res) => {
 
 export const getAllTodos = async (req, res) => {
   try {
-    // ✏️ TODO-1: 아래 ___ 를 채우세요.
-    //   sort 의 기본값은? (latest / oldest / title 중 — "최신순" 을 의미하는 키)
     const {
       isDone,
       search,
-      sort  = '___',                                       // ← TODO-1
+      sort  = 'latest',
       page  = '1',
       limit = '10'
     } = req.query;
 
-
-    // ✏️ TODO-2: where 조건 동적 조립 — 아래 ___ 두 군데를 채우세요.
-    //   ① req.query 값은 항상 문자열. 'true' 문자열과 비교해서 boolean 으로 변환.
-    //   ② title 과 content 양쪽을 모두 검색하려면 Prisma 의 어떤 키를 쓸까요? (AND / OR / NOT 중)
     const where = {};
     if (isDone !== undefined) {
-      where.isDone = (isDone === '___');                   // ← ①
+      where.isDone = (isDone === 'true');
     }
     if (search) {
-      where.___ = [                                        // ← ②
+      where.OR = [
         { title:   { contains: search, mode: 'insensitive' } },
         { content: { contains: search, mode: 'insensitive' } }
       ];
     }
 
-
-    // ✏️ TODO-3: orderBy 동적 조립 — 아래 ___ 를 채우세요.
-    //   객체 매핑: { latest: ..., oldest: ..., title: ... }[??] 로 sort 값에 해당하는 orderBy 객체를 꺼냅니다.
-    //   괄호 안에 들어갈 변수 이름은 무엇일까요?
     const orderBy = {
       latest: { createdAt: 'desc' },
       oldest: { createdAt: 'asc'  },
       title:  { title:     'asc'  }
-    }[___] || { createdAt: 'desc' };                       // ← TODO-3
+    }[sort] || { createdAt: 'desc' };
 
-
-    // ✏️ TODO-4: 페이지네이션 — 아래 ___ 를 채우세요. (같은 함수 이름을 두 번 씁니다)
-    //   문자열을 정수로 변환하는 JavaScript 내장 함수 이름은?
-    const pageNum = ___(page)  || 1;                       // ← TODO-4
-    const take    = ___(limit) || 10;                      // ← TODO-4 (같은 답)
+    const pageNum = parseInt(page)  || 1;
+    const take    = parseInt(limit) || 10;
     const skip    = (pageNum - 1) * take;
 
-
-    // ✏️ TODO-5: Promise.all 로 목록 + 전체 개수를 병렬 조회 — ___ 두 군데를 채우세요.
-    //   ① 조건에 맞는 모든 행을 배열로 가져오는 Prisma 메서드는? (practice-3 에서도 만났죠!)
-    //   ② 조건에 맞는 행의 "개수" 를 세는 Prisma 메서드는?
     const [todos, total] = await Promise.all([
-      prisma.todo.___({ where, orderBy, skip, take }),     // ← ①
-      prisma.todo.___({ where })                            // ← ②
+      prisma.todo.findMany({ where, orderBy, skip, take }),
+      prisma.todo.count({ where })
     ]);
 
     res.json({
@@ -107,9 +92,10 @@ export const getTodo = async (req, res) => {
 export const updateTodo = async (req, res) => {
   try {
     const { id } = req.params;
+    // ✏️ TODO-4: 위와 같은 답을 채우세요.
     const todo = await prisma.todo.update({
       where: { id: parseInt(id) },
-      data: req.body
+      data: req.___                                          // ← TODO-4 (같은 답)
     });
     res.json({ success: true, data: todo });
   } catch (error) {
