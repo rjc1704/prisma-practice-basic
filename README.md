@@ -1,16 +1,14 @@
 # reference — 전체 정답 (완성본)
 
-> 🎓 **챕터 1~10 + [3] 관계 챕터 1~2 (1:N + N:M)** 까지의 정답이 들어 있어요.
-> 후속 챕터(1:1, onDelete, 트랜잭션 등) 는 다음 실습 브랜치에서 누적됩니다.
+> 🎓 **챕터 1~10 + [3] 관계 챕터 1~3 (1:N + N:M + 1:1)** 까지의 정답이 들어 있어요.
 
 ## 🎯 이 브랜치가 다루는 것
 
-- ✅ User + Todo + **Tag** 모델
-- ✅ User ↔ Todo **1:N** (`todos[]` / `userId` / `@relation(...)`)
-- ✅ Todo ↔ Tag **N:M** (`tags[]` / `todos[]` / Prisma 자동 중간 테이블 `_TodoToTag`)
-- ✅ 시드 (사용자 2 + 태그 3 + 정해진 Todo 4 with tags + faker 30)
+- ✅ User + Todo + Tag + **Profile** 모델
+- ✅ User ↔ Todo **1:N** / Todo ↔ Tag **N:M** / User ↔ Profile **1:1**
+- ✅ 시드 (Alice: Profile 있음, Bob: 없음, 태그 3, Todo 4 with tags, faker 30)
 - ✅ Todo CRUD 6 + 쿼리 파라미터 + Zod + asyncHandler
-- ✅ `GET /users/:userId/todos` (1:N) / `GET /tags` (N:M 검증용)
+- ✅ `GET /users/:userId/todos` (1:N) / `GET /tags` (N:M) / `GET /users/:id` (1:1 with profile)
 
 ---
 
@@ -71,12 +69,13 @@ prisma-practice/
 | DELETE | `/todos/:id`         | 삭제 (없으면 404) |
 | GET    | `/users/:userId/todos` | 특정 사용자의 Todo 목록 (1:N 관계) |
 | GET    | `/tags`              | 전체 태그 목록 (N:M 검증용) |
+| GET    | `/users/:id`         | User + Profile 함께 조회 (1:1) |
 
 ---
 
 ## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-git checkout practice-8   # 마지막 실습 브랜치 (Todo-Tag N:M)
+git checkout practice-9   # 마지막 실습 브랜치 (User-Profile 1:1)
 git checkout practice-1   # 처음부터
 ```

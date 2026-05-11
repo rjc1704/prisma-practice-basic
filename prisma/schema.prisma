@@ -14,14 +14,22 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   name      String
-
-  // 1:N 의 1쪽 면 — 가상 필드. DB 컬럼은 안 생기고 include 할 때만 쓰임.
   todos     Todo[]
-
+  profile   Profile?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model Profile {
+  id        Int     @id @default(autoincrement())
+  bio       String?
+  avatarUrl String?
+  userId    Int     @unique
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("profiles")
 }
 
 model Todo {

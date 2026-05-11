@@ -10,6 +10,7 @@ import {
   getTodo,
   getUserTodos,
   getAllTags,
+  getUserWithProfile,
   updateTodo,
   upsertTodo,
   deleteTodo
@@ -51,6 +52,9 @@ app.get('/users/:userId/todos', getUserTodos);
 
 // ---------------- Tag (N:M) ----------------
 app.get('/tags', getAllTags);
+
+// ---------------- User + Profile (1:1) ----------------
+app.get('/users/:id', getUserWithProfile);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
