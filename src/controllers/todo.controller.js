@@ -253,40 +253,67 @@ export const replaceTodoTags = asyncHandler(async (req, res) => {
   res.json({ success: true, data: todo });
 });
 
-// ---------------- 일괄 처리 ([3] Ch10 — updateMany) ----------------
+// ---------------- 일괄 처리 (updateMany) ----------------
 
-// ✏️ TODO-1: 특정 사용자의 "미완료" Todo 를 한 번에 완료로 바꿉니다.
-//   여러 행을 한 SQL 로 업데이트하는 Prisma 메서드는? (update / updateMany / updateAll 중)
-//   ⚠️ 보안: where 에 userId 가 반드시 들어가야 다른 사용자 Todo 까지 건드리지 않아요!
 export const completeAllTodosForUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-
-  const result = await prisma.todo.___({                       // ← TODO-1
+  const result = await prisma.todo.updateMany({
     where: {
       userId: parseInt(userId),
       isDone: false
     },
     data: { isDone: true }
   });
-
   res.json({ success: true, completedCount: result.count });
 });
 
-// ✏️ TODO-2: 특정 태그가 붙은 미완료 Todo 만 일괄 완료.
-//   tags 관계 안에서 "하나라도 일치" 키워드는? (Ch5 에서 배운 키워드 — some / every / none)
 export const completeTodosByTag = asyncHandler(async (req, res) => {
   const { userId, tagName } = req.params;
-
   const result = await prisma.todo.updateMany({
     where: {
       userId: parseInt(userId),
       isDone: false,
-      tags: {
-        ___: { name: tagName }                                 // ← TODO-2
-      }
+      tags: { some: { name: tagName } }
     },
     data: { isDone: true }
   });
-
   res.json({ success: true, completedCount: result.count });
+});
+
+// ---------------- Todo + Tag 안전 복사 ([3] Ch11-12 — $transaction) ----------------
+
+// ✏️ TODO-1: 원본 Todo 를 읽고 동일한 태그를 단 채로 복제합니다.
+//   "읽고-쓰기" 사이에 다른 요청이 끼어들면 사고가 나죠. 두 작업을 원자적으로 묶어주는
+//   Prisma 메서드는? (transaction / $transaction / batch 중)
+//   힌트: $ 가 붙어 있어요. 일반 모델 메서드가 아니라 Prisma 클라이언트의 특수 메서드.
+export const copyTodo = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const copied = await prisma.___(async (tx) => {              // ← TODO-1
+    // ✏️ TODO-2: 트랜잭션 범위 안에서는 일반 prisma 가 아니라 ___ 를 써야 합니다.
+    //   (그래야 두 작업이 같은 트랜잭션 안에서 묶여요. 일반 prisma 로 호출하면
+    //    그 작업만 트랜잭션 바깥으로 새서 원자성이 깨집니다.)
+    const source = await ___.todo.findUnique({                 // ← TODO-2
+      where: { id: parseInt(id) },
+      include: { tags: true }
+    });
+
+    if (!source) {
+      throw new NotFoundError('복사할 Todo 를 찾을 수 없습니다');
+    }
+
+    // 같은 tx 위에서 새 Todo 생성 + 동일 태그 connect
+    return tx.todo.create({
+      data: {
+        title:   source.title + ' (복사본)',
+        content: source.content,
+        userId:  source.userId,
+        isDone:  false,
+        tags: { connect: source.tags.map(t => ({ id: t.id })) }
+      },
+      include: { tags: true }
+    });
+  });
+
+  res.status(201).json({ success: true, data: copied });
 });
