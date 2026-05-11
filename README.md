@@ -1,58 +1,50 @@
-# practice-7 — User ↔ Todo 1:N 관계
+# practice-8 — Todo ↔ Tag 다대다 (N:M) 관계
 
-> 📚 **[3] 관계 챕터 1 (실습#7)** 에 해당해요.
+> 📚 **[3] 관계 챕터 2 (실습#8)** 에 해당해요.
 
 ## 🎯 이번 브랜치 목표
 
-지금까지의 `Todo` 는 "주인"이 없었어요. 이제 **각 Todo 가 한 User 의 소유**가 되도록 1:N 관계를 정의하고, 시드와 API 도 그에 맞춰 손봅니다.
-
-스키마에 3 줄을 추가하면 끝나는데, 그 3 줄이 1:N 관계 설계의 표준 패턴이에요.
+`Tag` 모델을 추가하고, **하나의 Todo 가 여러 Tag 를 가질 수 있고 하나의 Tag 도 여러 Todo 에 공용** 되도록 N:M 관계를 만듭니다.
 
 ```
-User  1 ─────< N  Todo
-       todos[]    userId  +  user @relation(...)
+Todo  N >──────< M  Tag
+       tags[]      todos[]
+       (외래 키 필드 없음 — Prisma 가 _TodoToTag 중간 테이블을 자동 생성!)
 ```
+
+> 💡 1:N 과 비교 — 1:N 은 N쪽에 `userId` 같은 외래 키 컬럼이 보였죠. **N:M 은 양쪽에 배열 필드만 있고 외래 키가 안 보입니다.** Prisma 가 알아서 중간 테이블을 만들어 줘요.
 
 ---
 
 ## ✅ 이전 브랜치까지 완료된 것
 
-- ✅ `User` / `Todo` 모델 (관계는 아직 없는 상태)
-- ✅ 시드: 사용자 2명 + 정해진 Todo 4개 + faker 30개
-- ✅ Todo CRUD 6개 (`create / getAll / getOne / update / upsert / delete`)
-- ✅ 쿼리 파라미터 — `isDone` / `search` / `sort` / `page` / `limit`
-- ✅ Zod 스키마 + `validate` 미들웨어
-- ✅ `asyncHandler` + 커스텀 에러 (`NotFoundError` 등) + 글로벌 에러 분기
+- ✅ User / Todo 모델 + User ↔ Todo **1:N 관계** (`todos[]` / `userId` / `@relation(...)`)
+- ✅ 시드: 사용자 2명 + Todo 4 + 랜덤 30 (모든 Todo 에 `userId` 부여)
+- ✅ Todo CRUD 6 + 쿼리 파라미터 + Zod 검증 + asyncHandler 에러 처리
+- ✅ `GET /users/:userId/todos`
 
 ---
 
 ## ✅ TODO 체크리스트
 
-> 🗂 빈칸은 모두 `___` 로 표시돼 있고 `// ← TODO-N` 주석이 위치를 알려줘요. **총 6 곳**.
+> 🗂 빈칸은 모두 `___` 로 표시돼 있고 `// ← TODO-N` 주석이 위치를 알려줘요. **총 4 곳**.
 
-- [ ] **TODO-1**: `prisma/schema.prisma` — `User` 모델에 `todos ___[]` 가상 필드 빈칸 1
-- [ ] **TODO-2**: `prisma/schema.prisma` — `Todo` 모델의 `user User @relation(fields: [___], references: [___])` 빈칸 2
-- [ ] **TODO-3**: `prisma/seed.js` — 사용자 생성 시 Prisma 메서드 빈칸 2 (같은 답)
-- [ ] **TODO-4**: `prisma/seed.js` — Bob 의 Todo `userId` 빈칸 1
-- [ ] **TODO-5**: `src/controllers/todo.controller.js` — `getUserTodos` 의 `where: { userId: ___ }` 빈칸 1
-- [ ] **TODO-6**: `src/server.js` — `/users/:userId/todos` 라우트의 컨트롤러 빈칸 1
+- [ ] **TODO-1**: `prisma/schema.prisma` — `Tag` 모델의 `name String ___` 빈칸 1 (중복 방지 속성)
+- [ ] **TODO-2**: `prisma/schema.prisma` — `Tag` 모델의 `todos ___[]` 빈칸 1
+- [ ] **TODO-3**: `prisma/schema.prisma` — `Todo` 모델의 `tags ___[]` 빈칸 1
+- [ ] **TODO-4**: `prisma/seed.js` — `tags: { ___: [{ id: tagX.id }] }` 빈칸 1 (이미 있는 태그를 연결하는 키워드)
 
 ---
 
 ## 🛠 실행 방법
 
-> ⚠️ **DB 리셋 권장** — 이번 챕터부터 `Todo` 에 `userId NOT NULL` 이 추가돼요.
-> 기존 DB 의 todos 행에는 userId 가 없어서 그대로는 마이그레이션이 실패합니다.
+> ⚠️ `tags` / `_TodoToTag` 테이블이 새로 추가됩니다. 기존 데이터에는 문제 없지만 시드를 다시 돌려야 태그 데이터가 채워져요.
 
 ```bash
-# 1. (TODO-1, 2 채운 뒤) DB 초기화 + 새 마이그레이션 한 번에
-npx prisma migrate reset
-# → 확인 프롬프트에 y 입력. 그 다음 새 마이그레이션 이름을 묻거든 빈 칸 두고 엔터 OK.
+# 1. (TODO-1, 2, 3 채운 뒤) 마이그레이션
+npx prisma migrate dev --name add_tag_n_to_n
 
-# 또는 reset 없이 새 마이그레이션만 추가하고 싶다면:
-npx prisma migrate dev --name add_user_todo_relation
-
-# 2. (TODO-3, 4 채운 뒤) 시드 재실행 (reset 으로 이미 시드가 돌았다면 생략 가능)
+# 2. (TODO-4 채운 뒤) 시드 재실행
 npm run seed
 
 # 3. 서버 실행
@@ -61,76 +53,73 @@ npm run dev
 
 ---
 
-## 🧪 동작 확인 (cURL)
+## 🧪 동작 확인
+
+### 1) Prisma Studio 로 테이블 4개 확인
 
 ```bash
-# 0. 시드 확인 — Alice 의 id 와 Bob 의 id 를 알아두기
-curl http://localhost:3000/todos | head -200
-# → 데이터 안 userId 값을 보고 어떤 사용자가 누구인지 감 잡기.
-#   (또는 Prisma Studio: npx prisma studio)
-
-# 1. Alice 의 Todo 목록만 — TODO-6 라우트가 동작해야 응답이 옴
-curl http://localhost:3000/users/1/todos
-
-# 2. Bob 의 Todo 목록만
-curl http://localhost:3000/users/2/todos
-
-# 3. 새 Todo 생성 — userId 가 필수
-curl -X POST http://localhost:3000/todos \
-  -H "Content-Type: application/json" \
-  -d '{"title":"장보기","userId":1}'
-
-# 4. userId 누락 — Zod 가 막아야 정상 (400 응답)
-curl -X POST http://localhost:3000/todos \
-  -H "Content-Type: application/json" \
-  -d '{"title":"주인 없는 할 일"}'
-```
-
-예상 응답 (TODO-6 정상 동작 시):
-
-```json
-{
-  "success": true,
-  "count": 3,
-  "data": [
-    { "id": 1, "title": "우유 사오기",    "userId": 1, "isDone": false, ... },
-    { "id": 2, "title": "Prisma 공부하기", "userId": 1, "isDone": false, ... },
-    { "id": 3, "title": "운동하기",        "userId": 1, "isDone": true,  ... }
-  ]
-}
-```
-
----
-
-## 💡 관계가 잘 잡혔는지 확인
-
-```bash
-# Prisma Studio 로 todos 테이블 보면 userId 컬럼이 생겨 있어야 해요.
 npx prisma studio
 ```
 
-> 📚 `include` 의 세부 사용법은 **다음 단계(실습#11)** 에서 본격적으로 다뤄요.
-> 여기서는 "관계가 살아 있구나" 정도만 확인하면 충분합니다.
+`public` 스키마 아래에 **4개 테이블** 이 보이면 성공:
+- `users`
+- `todos`
+- `tags` ← 새로 생긴 것
+- `_TodoToTag` ← Prisma 가 자동 생성한 중간 테이블
+
+`_TodoToTag` 를 열어보면 `A`(todoId) / `B`(tagId) 두 컬럼이 있어요. 시드를 잘 채웠다면 5~6 개 행이 보일 거예요.
+
+### 2) cURL — 태그 전체 조회
+
+```bash
+curl http://localhost:3000/tags
+# → { "success": true, "count": 3, "data": [{ "name": "건강" }, { "name": "공부" }, { "name": "집안일" }] }
+```
+
+### 3) 관계가 잘 잡혔는지 코드로 확인
+
+```bash
+node -e "
+import('@prisma/client').then(async ({ PrismaClient }) => {
+  const p = new PrismaClient();
+  const todos = await p.todo.findMany({ include: { tags: true }, take: 4 });
+  console.log(JSON.stringify(todos, null, 2));
+  await p.\$disconnect();
+});
+"
+```
+
+각 Todo 의 `tags` 배열이 들어와 있어야 해요. (`운동하기` Todo 는 태그 2개가 붙어 있어야 함)
+
+> 📚 `include` 의 사용법은 **실습#11 (practice-11)** 에서 본격적으로 다뤄요.
+
+---
+
+## 💡 N:M 의 가장 중요한 한 가지
+
+> **외래 키 컬럼을 적지 않습니다.** Tag 에도 todoId 없고, Todo 에도 tagId 없어요. **양쪽 다 배열 필드만** 있죠. Prisma 가 알아서 `_TodoToTag` 라는 중간 테이블에 `(A=todoId, B=tagId)` 쌍을 적어 주거든요.
+
+또 하나 — N:M 에서 자식을 연결할 때는 `createMany` 가 못 쓰여요 (nested 관계 미지원). 그래서 시드의 정해진 Todo 4개는 개별 `prisma.todo.create({...})` 로 만듭니다. 랜덤 30개는 태그가 없으니 그대로 `createMany` 로 OK.
 
 ---
 
 ## 🧠 막히면?
 
 ```bash
-# 다음 브랜치(practice-8)에 정답 + 다음 챕터(Todo-Tag N:M) 가 있어요.
-git checkout practice-8
+# 다음 브랜치(practice-9) 에 정답 + 다음 챕터(User-Profile 1:1) 가 있어요.
+git checkout practice-9
 
-# 또는 reference 브랜치(전체 정답).
+# 또는 reference 브랜치 (전체 정답)
 git checkout reference
 
 # 다시 돌아오기
-git checkout practice-7
+git checkout practice-8
 ```
 
 ---
 
 ## 📚 교안 참고 포인트
 
-- **0. ERD 설계** — 명세 → 엔티티 → 관계. User—Todo 의 양방향 질문법.
-- **1. 1:N 스키마 패턴** — 1쪽은 `Todo[]` 가상 필드 한 줄, N쪽은 `userId` + `@relation(...)` 두 줄.
-- **`@relation(fields: [...], references: [...])` 해석** — "내(N쪽) 외래 키 fields 를, 부모(1쪽) references 와 연결한다."
+- **2. Todo—Tag N:M 스키마 패턴** — 양쪽 배열 필드만, 외래 키 없음.
+- **N:M 중간 테이블 (`_TodoToTag`)** — Prisma 가 자동 생성. `A` 는 알파벳 순으로 앞 모델(Todo), `B` 는 뒤 모델(Tag) 의 id.
+- **`connect` 문법** — "기존 행을 잇기"위한 키워드. 새 행 만들기는 `create`.

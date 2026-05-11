@@ -108,17 +108,22 @@ export const deleteTodo = asyncHandler(async (req, res) => {
 
 // ---------------- User ↔ Todo (1:N) ----------------
 
-// ✏️ TODO-5: 특정 사용자의 Todo 만 골라오는 컨트롤러입니다.
-//   where 안 ___ 에 들어갈 값을 채우세요.
-//   힌트: req.params 의 값은 모두 "문자열"이라 그대로 쓰면 Prisma 가 타입 에러를 냅니다.
-//         숫자로 바꾸는 함수가 필요해요 — parseInt(...) 또는 Number(...).
 export const getUserTodos = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const todos = await prisma.todo.findMany({
-    where: { userId: ___ },                                  // ← TODO-5
+    where: { userId: parseInt(userId) },
     orderBy: { createdAt: 'desc' }
   });
 
   res.json({ success: true, count: todos.length, data: todos });
+});
+
+// ---------------- Tag (N:M 검증용 — 학생 손댈 곳 없음) ----------------
+
+export const getAllTags = asyncHandler(async (req, res) => {
+  const tags = await prisma.tag.findMany({
+    orderBy: { name: 'asc' }
+  });
+  res.json({ success: true, count: tags.length, data: tags });
 });

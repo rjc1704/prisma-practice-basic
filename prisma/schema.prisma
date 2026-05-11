@@ -14,12 +14,7 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   name      String
-
-  // ✏️ TODO-1: 이 User 가 가진 Todo 목록을 가리키는 가상 필드를 추가하세요.
-  //   힌트: `필드명  ___[]` 형태. 1:N 의 1쪽 면은 항상 배열 타입이에요.
-  //         실제 DB 컬럼은 안 생기고, include 할 때만 쓰입니다.
-  todos     ___[]                                            // ← TODO-1
-
+  todos     Todo[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -31,15 +26,27 @@ model Todo {
   title     String
   content   String?
   isDone    Boolean  @default(false)
-
-  // ✏️ TODO-2: 1:N 의 N쪽 면을 완성하세요. 외래 키(userId) 는 이미 채워져 있어요.
-  //   아래 user 필드의 @relation 안 ___ 두 곳을 채우면 됩니다.
-  //   힌트: "이 Todo 의 어떤 필드(___) 를 users 테이블의 어떤 필드(___) 와 연결할까?"
   userId    Int
-  user      User     @relation(fields: [___], references: [___])   // ← TODO-2
+  user      User     @relation(fields: [userId], references: [id])
+
+  // ✏️ TODO-3: Todo 쪽에서도 Tag 들을 가리키는 가상 필드를 추가해야 N:M 이 성립해요.
+  //   힌트: 양쪽 모두 배열 필드 — Tag[] 형태. 외래 키는 안 만들어도 돼요(중간 테이블은 Prisma 가 자동 생성).
+  tags      ___[]                                            // ← TODO-3
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("todos")
+}
+
+// ✏️ TODO-1: Tag 모델의 name 은 중복되면 안 돼요. (같은 이름의 태그가 두 개 있으면 헷갈리겠죠?)
+//   "이 컬럼은 unique 다" 를 표시하는 Prisma 속성은? (@id / @unique / @default 중)
+// ✏️ TODO-2: Tag 쪽에서도 이 Tag 가 붙어 있는 Todo 들을 가리키는 가상 필드가 필요해요.
+//   힌트: 1:N 의 1쪽 면과 똑같이 ___[] 형태.
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String ___                                           // ← TODO-1
+  todos ___[]                                                // ← TODO-2
+
+  @@map("tags")
 }
