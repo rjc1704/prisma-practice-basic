@@ -148,40 +148,78 @@ export const deleteUser = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'User가 삭제되었습니다 (Todo / Profile 도 자동 삭제)' });
 });
 
-// ---------------- 관계 조회 ([3] Ch5 — include / select / some) ----------------
+// ---------------- 관계 조회 (include / select / some) ----------------
 
-// ✏️ TODO-1: "이 Todo + 작성자(User) + 붙은 Tag 들" 을 한 번에 가져오려면?
-//   힌트: include / select / fetch 중 — "관계를 통째로 끌어오는" 키워드.
 export const getTodoWithRelations = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const todo = await prisma.todo.findUnique({
     where: { id: parseInt(id) },
-    ___: { user: true, tags: true }                          // ← TODO-1
+    include: { user: true, tags: true }
   });
   if (!todo) throw new NotFoundError('Todo를 찾을 수 없습니다');
   res.json({ success: true, data: todo });
 });
 
-// ✏️ TODO-2: 특정 태그가 붙은 Todo 들만 조회합니다.
-//   tags 관계 안에서 "하나라도 일치하면 OK" 를 의미하는 키워드는?
-//   힌트: some / every / none 중. "적어도 하나" 가 some 의 영어 직역.
 export const getTodosByTag = asyncHandler(async (req, res) => {
   const { name } = req.params;
   const todos = await prisma.todo.findMany({
-    where: {
-      tags: { ___: { name } }                                // ← TODO-2
-    },
+    where: { tags: { some: { name } } },
     include: { tags: true }
   });
   res.json({ success: true, count: todos.length, data: todos });
 });
 
-// ✏️ TODO-3: 응답에 "id / title / isDone" 만 담고 싶다면?
-//   힌트: select / include / pick 중 — "지정한 필드만 가져오기" 키워드.
-//          (include 는 "전체 + 관계 추가", select 는 "지정한 것만").
 export const getTodosLite = asyncHandler(async (req, res) => {
   const todos = await prisma.todo.findMany({
-    ___: { id: true, title: true, isDone: true }             // ← TODO-3
+    select: { id: true, title: true, isDone: true }
   });
   res.json({ success: true, count: todos.length, data: todos });
+});
+
+// ---------------- Todo 에 Tag 추가 ([3] Ch7-8 — connectOrCreate) ----------------
+
+// ✏️ TODO-1: "있으면 연결, 없으면 새로 만들어서 연결" 하는 키워드는?
+//   힌트: connect / create / connectOrCreate 중 — 이름 그대로 의미가 살아 있는 키워드.
+//   (connect 는 "있는 것만 연결" — 없으면 에러. create 는 "무조건 새로 만들기" — 중복 키 에러.)
+export const addTagToTodo = asyncHandler(async (req, res) => {
+  const { todoId } = req.params;
+  const { name } = req.body;
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        ___: {                                                // ← TODO-1
+          where:  { name },
+          create: { name }
+        }
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.status(201).json({ success: true, data: todo });
+});
+
+// ✏️ TODO-2: 여러 태그 이름 배열을 한 번에 처리하는 버전.
+//   tagNames.map(name => ({ where: { name }, create: { name } })) 형태로
+//   connectOrCreate 에 배열을 넘기면 됩니다. 똑같이 connectOrCreate 키워드 자리.
+export const addTagsBulk = asyncHandler(async (req, res) => {
+  const { todoId } = req.params;
+  const { names } = req.body;   // ["급함", "오늘", "중요"]
+
+  const todo = await prisma.todo.update({
+    where: { id: parseInt(todoId) },
+    data: {
+      tags: {
+        ___: names.map(name => ({                             // ← TODO-2
+          where:  { name },
+          create: { name }
+        }))
+      }
+    },
+    include: { tags: true }
+  });
+
+  res.status(201).json({ success: true, data: todo });
 });
