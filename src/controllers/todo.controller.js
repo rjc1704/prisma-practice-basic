@@ -147,3 +147,31 @@ export const deleteUser = asyncHandler(async (req, res) => {
   await prisma.user.delete({ where: { id: parseInt(id) } });
   res.json({ success: true, message: 'User가 삭제되었습니다 (Todo / Profile 도 자동 삭제)' });
 });
+
+// ---------------- 관계 조회 (include / select / some) ----------------
+
+export const getTodoWithRelations = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const todo = await prisma.todo.findUnique({
+    where: { id: parseInt(id) },
+    include: { user: true, tags: true }
+  });
+  if (!todo) throw new NotFoundError('Todo를 찾을 수 없습니다');
+  res.json({ success: true, data: todo });
+});
+
+export const getTodosByTag = asyncHandler(async (req, res) => {
+  const { name } = req.params;
+  const todos = await prisma.todo.findMany({
+    where: { tags: { some: { name } } },
+    include: { tags: true }
+  });
+  res.json({ success: true, count: todos.length, data: todos });
+});
+
+export const getTodosLite = asyncHandler(async (req, res) => {
+  const todos = await prisma.todo.findMany({
+    select: { id: true, title: true, isDone: true }
+  });
+  res.json({ success: true, count: todos.length, data: todos });
+});
