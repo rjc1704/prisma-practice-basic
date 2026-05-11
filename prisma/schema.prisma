@@ -27,7 +27,7 @@ model Profile {
   bio       String?
   avatarUrl String?
   userId    Int     @unique
-  user      User    @relation(fields: [userId], references: [id])
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }
@@ -38,9 +38,9 @@ model Todo {
   content   String?
   isDone    Boolean  @default(false)
 
-  // 1:N 의 N쪽 면 — 실제 외래 키 컬럼 + @relation 메타.
+  // 1:N 의 N쪽 면 — 외래 키 + @relation. User 삭제 시 그 User 의 Todo 도 함께 삭제.
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // N:M — Tag 양쪽 모두 배열 필드. 외래 키 없음(_TodoToTag 중간 테이블 자동 생성).
   tags      Tag[]

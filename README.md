@@ -1,14 +1,12 @@
 # reference — 전체 정답 (완성본)
 
-> 🎓 **챕터 1~10 + [3] 관계 챕터 1~3 (1:N + N:M + 1:1)** 까지의 정답이 들어 있어요.
+> 🎓 **챕터 1~10 + [3] 관계 챕터 1~4 (1:N + N:M + 1:1 + onDelete Cascade)** 까지의 정답.
 
 ## 🎯 이 브랜치가 다루는 것
 
-- ✅ User + Todo + Tag + **Profile** 모델
-- ✅ User ↔ Todo **1:N** / Todo ↔ Tag **N:M** / User ↔ Profile **1:1**
-- ✅ 시드 (Alice: Profile 있음, Bob: 없음, 태그 3, Todo 4 with tags, faker 30)
-- ✅ Todo CRUD 6 + 쿼리 파라미터 + Zod + asyncHandler
-- ✅ `GET /users/:userId/todos` (1:N) / `GET /tags` (N:M) / `GET /users/:id` (1:1 with profile)
+- ✅ User + Todo + Tag + Profile 모델, **onDelete: Cascade** 적용
+- ✅ User 삭제 → Todo / Profile 자동 삭제
+- ✅ 라우트: Todo CRUD + 1:N / N:M / 1:1 검증 라우트 + `DELETE /users/:id`
 
 ---
 
@@ -70,12 +68,13 @@ prisma-practice/
 | GET    | `/users/:userId/todos` | 특정 사용자의 Todo 목록 (1:N 관계) |
 | GET    | `/tags`              | 전체 태그 목록 (N:M 검증용) |
 | GET    | `/users/:id`         | User + Profile 함께 조회 (1:1) |
+| DELETE | `/users/:id`         | User 삭제 (Cascade — Todo / Profile 자동 삭제) |
 
 ---
 
 ## 💡 학생용 브랜치로 돌아가기
 
 ```bash
-git checkout practice-9   # 마지막 실습 브랜치 (User-Profile 1:1)
+git checkout practice-10  # 마지막 실습 브랜치 (onDelete Cascade)
 git checkout practice-1   # 처음부터
 ```
