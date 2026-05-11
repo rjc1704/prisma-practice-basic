@@ -16,7 +16,7 @@
 | `practice-4` | 7 | 쿼리 파라미터 (필터 / 검색 / 정렬 / 페이지네이션) |
 | `practice-5` | 9 | Zod 유효성 검사 + 미들웨어 |
 | `practice-6` | 10 | 오류 처리 (asyncHandler + 커스텀 에러 + 글로벌 핸들러) |
-| `practice-7` | 8, 11 | 심화 — aggregate / groupBy / distinct / raw / 트랜잭션 |
+| `practice-7` | 8 | 심화 — distinct / aggregate / groupBy |
 | `reference` | 전체 정답 | 완성본. 막힐 때 비교용으로 참고 |
 
 ---
