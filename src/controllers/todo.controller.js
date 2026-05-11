@@ -2,8 +2,8 @@
 // Todo 컨트롤러
 // ============================================
 //
-// 이번 브랜치에서는 모든 컨트롤러가 asyncHandler 로 감싸졌고
-// try/catch 가 사라졌어요. 에러는 asyncHandler 가 종류별로 알아서 처리합니다.
+// 모든 컨트롤러는 asyncHandler 로 감싸져 있어 try/catch 가 필요 없어요.
+// 에러는 asyncHandler 가 종류별로 알아서 처리합니다.
 
 import prisma from '../lib/prisma.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -66,15 +66,12 @@ export const getAllTodos = asyncHandler(async (req, res) => {
   });
 });
 
-// ✏️ TODO-3: 아래 ___ 를 채우세요.
-//   Todo 가 없을 때 던질 커스텀 에러 클래스 이름은? (이 파일 상단 import 참고)
-//   asyncHandler 가 이 에러를 받아서 404 응답을 보내줍니다.
 export const getTodo = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const todo = await prisma.todo.findUnique({
     where: { id: parseInt(id) }
   });
-  if (!todo) throw new ___('Todo를 찾을 수 없습니다');         // ← TODO-3
+  if (!todo) throw new NotFoundError('Todo를 찾을 수 없습니다');
   res.json({ success: true, data: todo });
 });
 
@@ -90,11 +87,11 @@ export const updateTodo = asyncHandler(async (req, res) => {
 });
 
 export const upsertTodo = asyncHandler(async (req, res) => {
-  const { id, title, content, isDone } = req.body;
+  const { id, title, content, isDone, userId } = req.body;
   const todo = await prisma.todo.upsert({
     where:  { id },
     update: { title, content, isDone },
-    create: { title, content, isDone: isDone ?? false }
+    create: { title, content, isDone: isDone ?? false, userId }
   });
   res.json({ success: true, data: todo });
 });
@@ -107,4 +104,21 @@ export const deleteTodo = asyncHandler(async (req, res) => {
     where: { id: parseInt(id) }
   });
   res.json({ success: true, message: 'Todo가 삭제되었습니다' });
+});
+
+// ---------------- User ↔ Todo (1:N) ----------------
+
+// ✏️ TODO-5: 특정 사용자의 Todo 만 골라오는 컨트롤러입니다.
+//   where 안 ___ 에 들어갈 값을 채우세요.
+//   힌트: req.params 의 값은 모두 "문자열"이라 그대로 쓰면 Prisma 가 타입 에러를 냅니다.
+//         숫자로 바꾸는 함수가 필요해요 — parseInt(...) 또는 Number(...).
+export const getUserTodos = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const todos = await prisma.todo.findMany({
+    where: { userId: ___ },                                  // ← TODO-5
+    orderBy: { createdAt: 'desc' }
+  });
+
+  res.json({ success: true, count: todos.length, data: todos });
 });

@@ -14,26 +14,32 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   name      String
+
+  // ✏️ TODO-1: 이 User 가 가진 Todo 목록을 가리키는 가상 필드를 추가하세요.
+  //   힌트: `필드명  ___[]` 형태. 1:N 의 1쪽 면은 항상 배열 타입이에요.
+  //         실제 DB 컬럼은 안 생기고, include 할 때만 쓰입니다.
+  todos     ___[]                                            // ← TODO-1
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
+model Todo {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  isDone    Boolean  @default(false)
 
-// TODO-1: Todo 모델을 작성하세요.
-//   필드:
-//     - id        Int      자동 증가 PK            (@id @default(autoincrement()))
-//     - title     String   제목 (필수)
-//     - content   String?  내용 (선택 — NULL 허용)
-//     - isDone    Boolean  완료 여부 (기본값 false) (@default(false))
-//     - createdAt DateTime 기본값: 현재 시간        (@default(now()))
-//     - updatedAt DateTime 자동 업데이트            (@updatedAt)
-//   테이블 매핑: @@map("todos")
-//
-//   힌트: 교안 4챕터의 (1) prisma/schema.prisma 작성 참고
-//
-// model Todo {
-//   ???
-//   @@map("todos")
-// }
+  // ✏️ TODO-2: 1:N 의 N쪽 면을 완성하세요. 외래 키(userId) 는 이미 채워져 있어요.
+  //   아래 user 필드의 @relation 안 ___ 두 곳을 채우면 됩니다.
+  //   힌트: "이 Todo 의 어떤 필드(___) 를 users 테이블의 어떤 필드(___) 와 연결할까?"
+  userId    Int
+  user      User     @relation(fields: [___], references: [___])   // ← TODO-2
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("todos")
+}

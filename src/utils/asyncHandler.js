@@ -31,14 +31,9 @@ export const asyncHandler = (fn) => {
         });
       }
 
-      // ✏️ TODO-1: 아래 ___ 두 군데를 채우세요.
-      //   ① Prisma 가 "없는 행을 update / delete 시도" 시 던지는 에러 코드는?
-      //      (practice-3 에서도 만났죠! P 로 시작하는 5자리)
-      //   ② "리소스 없음" 을 의미하는 HTTP 상태 코드는?
-      //
       // 2) Prisma — 행 없음
-      if (err.code === '___') {                                // ← ①
-        return res.status(___).json({                          // ← ②
+      if (err.code === 'P2025') {
+        return res.status(404).json({
           success: false,
           message: '데이터를 찾을 수 없습니다'
         });
