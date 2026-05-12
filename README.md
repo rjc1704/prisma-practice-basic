@@ -1,12 +1,12 @@
-# practice-5 — Zod 유효성 검사 + 미들웨어
+# practice-5 — Zod 유효성 검사
 
 > 📚 **교안 챕터 9** 에 해당해요.
 
 ## 🎯 이번 브랜치 목표
 
-요청 본문이 우리가 기대한 모양인지 **컨트롤러 진입 전에** 검증하는 패턴을 만듭니다. **Zod 스키마 + 미들웨어** 조합으로 컨트롤러 코드를 깔끔하게 유지해요.
+요청 본문이 우리가 기대한 모양인지 **컨트롤러 진입과 동시에** 검증하는 패턴을 만듭니다. **Zod 스키마 + `schema.parse(req.body)`** 조합으로 잘못된 입력은 의미 있는 400 응답으로, 통과한 입력은 깨끗한 데이터로 받아서 Prisma 에 전달해요.
 
-> 💡 스키마 / 미들웨어 / 라우트 / 컨트롤러 사용 부분의 골격이 모두 작성돼 있어요. 여러분은 **`___` 빈칸 7 군데** 만 채우면 됩니다.
+> 💡 스키마 / 컨트롤러 골격이 모두 작성돼 있어요. 여러분은 **`___` 빈칸 7 군데** 만 채우면 됩니다.
 
 ---
 
@@ -21,9 +21,9 @@
 
 - [ ] **먼저**: `npm install` 실행 (`package.json` 에 `zod` 가 추가됐어요)
 - [ ] **TODO-1**: `src/schemas/todo.schema.js` — `updateTodoSchema` 의 Zod 메서드 이름 빈칸 1개
-- [ ] **TODO-2**: `src/middlewares/validate.js` — Zod 의 검증 메서드 + Express 콜백 호출 = 빈칸 2개
-- [ ] **TODO-3**: `src/server.js` — `POST /todos` 와 `PATCH /todos/:id` 앞에 검증 미들웨어 끼우기 = 빈칸 2개 (같은 답)
-- [ ] **TODO-4**: `src/controllers/todo.controller.js` — `createTodo` / `updateTodo` 안의 `req.___` 채우기 = 빈칸 2개 (같은 답)
+- [ ] **TODO-2**: `src/controllers/todo.controller.js` — `createTodo` / `updateTodo` 에서 `req.body` 를 검증하는 Zod 메서드 이름 빈칸 2개 (같은 답)
+- [ ] **TODO-3**: `src/controllers/todo.controller.js` — `catch` 안에서 Zod 검증 에러 클래스 이름 빈칸 2개 (같은 답)
+- [ ] **TODO-4**: `src/controllers/todo.controller.js` — ZodError 의 "필드별 실패 상세 배열" 속성 이름 빈칸 2개 (같은 답)
 
 ---
 
@@ -65,16 +65,21 @@ curl -X POST http://localhost:3000/todos \
 
 ---
 
-## 💡 왜 미들웨어로 분리하나?
+## 💡 패턴 한눈에 보기
 
 ```
-❌ 검증 코드를 컨트롤러 안에 두면:
-   - 모든 컨트롤러 첫 줄에 try/catch + Zod 검증 코드 반복
-   - 비즈니스 로직이 묻혀버림
+컨트롤러 try 진입
+   ↓
+schema.parse(req.body)   ← 검증 통과: 깨끗한 데이터 반환
+   ↓                       검증 실패: z.ZodError throw
+Prisma 호출
+   ↓
+res.json(...)
 
-✅ 미들웨어로 분리하면:
-   - 라우터 정의에서 "이 라우트는 이 스키마로 검증한다" 가 한눈에 보임
-   - 컨트롤러는 검증된 데이터만 받음 → 본업에 집중
+catch
+ ├─ error instanceof z.ZodError → 400 + 필드별 에러 배열
+ ├─ error.code === 'P2025'      → 404 (Prisma 행 없음)
+ └─ 그 외                        → 400 + 메시지
 ```
 
 ---
@@ -82,6 +87,6 @@ curl -X POST http://localhost:3000/todos \
 ## 💡 막히면?
 
 ```bash
-git checkout practice-6   # 정답 확인
+git checkout practice-6   # 다음 브랜치(에러 처리 정돈)
 git checkout practice-5   # 다시 돌아오기
 ```
