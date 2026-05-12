@@ -15,9 +15,9 @@
 
 ## ✅ 이전 브랜치까지 완료된 것
 
-- ✅ Zod 검증 + validate 미들웨어
+- ✅ Zod 검증 (컨트롤러 안 `schema.parse(req.body)`)
 - ✅ `POST /todos`, `PATCH /todos/:id` 에서 검증 동작
-- ✅ 컨트롤러에서 `req.validatedData` 사용
+- ✅ `try / catch` 안에서 `ZodError` 직접 분기
 
 ---
 

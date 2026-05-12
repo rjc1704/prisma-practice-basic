@@ -8,13 +8,13 @@
 import prisma from '../lib/prisma.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { NotFoundError } from '../utils/errors.js';
+import { createTodoSchema, updateTodoSchema } from '../schemas/todo.schema.js';
 
 // ---------------- Create ----------------
 
 export const createTodo = asyncHandler(async (req, res) => {
-  const todo = await prisma.todo.create({
-    data: req.validatedData
-  });
+  const data = createTodoSchema.parse(req.body);
+  const todo = await prisma.todo.create({ data });
   res.status(201).json({ success: true, data: todo });
 });
 
@@ -82,9 +82,10 @@ export const getTodo = asyncHandler(async (req, res) => {
 
 export const updateTodo = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const data = updateTodoSchema.parse(req.body);
   const todo = await prisma.todo.update({
     where: { id: parseInt(id) },
-    data: req.validatedData
+    data
   });
   res.json({ success: true, data: todo });
 });

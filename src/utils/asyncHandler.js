@@ -16,11 +16,11 @@ import { z } from 'zod';
 import { AppError } from './errors.js';
 
 export const asyncHandler = (fn) => {
-  return async (req, res, next) => {
+  return async (req, res) => {
     try {
-      await fn(req, res, next);
+      await fn(req, res);
     } catch (err) {
-      // 1) Zod 검증 에러 (안전망 — 보통 validate 미들웨어가 먼저 잡습니다)
+      // 1) Zod 검증 에러 — 컨트롤러 안 schema.parse() 가 던진 ZodError 처리
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           success: false,
