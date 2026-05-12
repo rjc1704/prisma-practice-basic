@@ -23,8 +23,6 @@ import {
   upsertTodo,
   deleteTodo
 } from './controllers/todo.controller.js';
-import { validate } from './middlewares/validate.js';
-import { createTodoSchema, updateTodoSchema } from './schemas/todo.schema.js';
 
 dotenv.config();
 
@@ -46,11 +44,11 @@ app.get('/todos', getAllTodos);
 app.get('/todos/:id', getTodo);
 
 // CREATE
-app.post('/todos', validate(createTodoSchema), createTodo);
+app.post('/todos', createTodo);
 
 // UPDATE
 app.put('/todos/upsert', upsertTodo);
-app.patch('/todos/:id', validate(updateTodoSchema), updateTodo);
+app.patch('/todos/:id', updateTodo);
 
 // DELETE
 app.delete('/todos/:id', deleteTodo);
