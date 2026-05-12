@@ -2,8 +2,8 @@
 // Express 서버 진입점
 // ============================================
 
-import express from 'express';
-import dotenv from 'dotenv';
+import express from "express";
+import dotenv from "dotenv";
 import {
   createTodo,
   getAllTodos,
@@ -24,67 +24,68 @@ import {
   copyTodo,
   updateTodo,
   upsertTodo,
-  deleteTodo
-} from './controllers/todo.controller.js';
+  deleteTodo,
+} from "./controllers/todo.controller.js";
 
-dotenv.config();
+const envFile = `.env.${process.env.NODE_ENV || "development"}`;
+dotenv.config({ path: envFile });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
+app.get("/health", (req, res) => {
+  res.json({ status: "OK" });
 });
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Prisma Practice API Server' });
+app.get("/", (req, res) => {
+  res.json({ message: "Prisma Practice API Server" });
 });
 
 // READ
-app.get('/todos', getAllTodos);
-app.get('/todos/:id', getTodo);
+app.get("/todos", getAllTodos);
+app.get("/todos/:id", getTodo);
 
 // CREATE
-app.post('/todos', createTodo);
+app.post("/todos", createTodo);
 
 // UPDATE
-app.put('/todos/upsert', upsertTodo);
-app.patch('/todos/:id', updateTodo);
+app.put("/todos/upsert", upsertTodo);
+app.patch("/todos/:id", updateTodo);
 
 // DELETE
-app.delete('/todos/:id', deleteTodo);
+app.delete("/todos/:id", deleteTodo);
 
 // ---------------- User ↔ Todo (1:N) ----------------
-app.get('/users/:userId/todos', getUserTodos);
+app.get("/users/:userId/todos", getUserTodos);
 
 // ---------------- Tag (N:M) ----------------
-app.get('/tags', getAllTags);
+app.get("/tags", getAllTags);
 
 // ---------------- User + Profile (1:1) ----------------
-app.get('/users/:id', getUserWithProfile);
-app.delete('/users/:id', deleteUser);
+app.get("/users/:id", getUserWithProfile);
+app.delete("/users/:id", deleteUser);
 
 // ---------------- 관계 조회 (include / select / some) ----------------
-app.get('/todos/:id/full', getTodoWithRelations);
-app.get('/todos-lite', getTodosLite);
-app.get('/tags/:name/todos', getTodosByTag);
+app.get("/todos/:id/full", getTodoWithRelations);
+app.get("/todos-lite", getTodosLite);
+app.get("/tags/:name/todos", getTodosByTag);
 
 // ---------------- Todo 에 Tag 추가 (connectOrCreate) ----------------
-app.post('/todos/:todoId/tags', addTagToTodo);
-app.post('/todos/:todoId/tags/bulk', addTagsBulk);
+app.post("/todos/:todoId/tags", addTagToTodo);
+app.post("/todos/:todoId/tags/bulk", addTagsBulk);
 
 // ---------------- Tag 해제 (disconnect / set) ----------------
-app.delete('/todos/:todoId/tags/:tagId', removeTagFromTodo);
-app.put('/todos/:todoId/tags', replaceTodoTags);
+app.delete("/todos/:todoId/tags/:tagId", removeTagFromTodo);
+app.put("/todos/:todoId/tags", replaceTodoTags);
 
 // ---------------- 일괄 처리 (updateMany) ----------------
-app.patch('/users/:userId/todos/complete-all', completeAllTodosForUser);
-app.patch('/users/:userId/todos/complete-by-tag/:tagName', completeTodosByTag);
+app.patch("/users/:userId/todos/complete-all", completeAllTodosForUser);
+app.patch("/users/:userId/todos/complete-by-tag/:tagName", completeTodosByTag);
 
 // ---------------- Todo + Tag 안전 복사 ($transaction) ----------------
-app.post('/todos/:id/copy', copyTodo);
+app.post("/todos/:id/copy", copyTodo);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
