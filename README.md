@@ -43,11 +43,9 @@ prisma-practice/
 │   └── migrations/           Prisma 자동 생성
 └── src/
     ├── controllers/
-    │   └── todo.controller.js   6개 CRUD (asyncHandler 적용)
+    │   └── todo.controller.js   6개 CRUD (asyncHandler 적용, 컨트롤러 안 schema.parse() 검증)
     ├── schemas/
     │   └── todo.schema.js       Zod create/update 스키마
-    ├── middlewares/
-    │   └── validate.js          Zod 검증 미들웨어
     ├── utils/
     │   ├── asyncHandler.js      모든 에러 분기 처리
     │   └── errors.js            AppError / NotFoundError 등
