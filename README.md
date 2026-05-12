@@ -21,8 +21,8 @@ User  1 ─────< N  Todo
 - ✅ 시드: 사용자 2명 + 정해진 Todo 4개 + faker 30개
 - ✅ Todo CRUD 6개 (`create / getAll / getOne / update / upsert / delete`)
 - ✅ 쿼리 파라미터 — `isDone` / `search` / `sort` / `page` / `limit`
-- ✅ Zod 스키마 + `validate` 미들웨어
-- ✅ `asyncHandler` + 커스텀 에러 (`NotFoundError` 등) + 글로벌 에러 분기
+- ✅ Zod 스키마 + 컨트롤러 안 `schema.parse(req.body)` 검증
+- ✅ `asyncHandler` + 커스텀 에러 (`NotFoundError` 등) — catch 안에서 분기
 
 ---
 
